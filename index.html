@@ -236,7 +236,7 @@
    Replace YOUR_API_KEY_HERE with your actual Anthropic API key
    ===================================================================== */
 
-const API_KEY = "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";
+const API_KEY = "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";
 const API_URL = "https://api.anthropic.com/v1/messages";
 const MODEL   = "claude-sonnet-4-6";
 
@@ -586,7 +586,7 @@ function inlineMd(seg){
 }
 
 function addBot(text, typing=false){
-  const isFallback = text.includes('api.connect@axis.bank.in') && text.length < 200;
+  const isFallback = false; // Fallback display disabled - show all responses normally
   const w = document.createElement('div'); w.className='msg bot';
   let inner = isFallback
     ? `<div class="fallback">I don't have that information in the integration docs. Please reach out to <a href="mailto:api.connect@axis.bank.in">api.connect@axis.bank.in</a> for further support.</div>`
@@ -702,9 +702,8 @@ async function send(){
   } catch(err){
     rmTyping();
     const isKeyMissing = API_KEY === 'YOUR_API_KEY_HERE';
-    addBot(isKeyMissing
-      ? '**API key not configured.**\n\nOpen the HTML file, find line 239 and replace `YOUR_API_KEY_HERE` with your Anthropic API key.'
-      : `**Error connecting to assistant:** ${err.message}\n\nPlease try again. For integration support, contact api.connect@axis.bank.in`);;
+    const errMsg = isKeyMissing ? '**API key not configured.** Find line 239 and replace YOUR_API_KEY_HERE with your Anthropic API key.' : '**Error:** ' + err.message + ' — If this persists, contact api.connect@axis.bank.in';
+    addBot(errMsg);
   }
 
   busy=false; sendBtn.disabled=false; inputEl.focus();
