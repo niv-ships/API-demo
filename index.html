@@ -1,1 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Axis Bank — API Developer Portal</title>
+<style>
+  :root{
+    --crimson:#97144D; --magenta:#ED1164; --ink:#000104;
+    --grey-dark:#6D6E71; --grey-mid:#939598; --grey-light:#D1D3D4;
+    --canvas:#F7F6F8; --panel:#FFFFFF; --code-bg:#1d1320;
+    --shadow:0 1px 2px rgba(0,1,4,.06), 0 8px 24px rgba(151,20,77,.07);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:linear-gradient(180deg,#fbf7f9,#f3eef1);-webkit-font-smoothing:antialiased;min-height:100dvh}
 
+  /* ---------- Mock developer-portal page (background context) ---------- */
+  .topnav{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--grey-light);display:flex;align-items:center;gap:14px;padding:13px 24px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand .m{width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,var(--crimson),var(--magenta));display:grid;place-items:center}
+  .brand .m svg{width:18px;height:18px}
+  .brand b{font-size:.95rem;letter-spacing:.01em}
+  .brand span{color:var(--grey-dark);font-weight:400}
+  .navlinks{margin-left:auto;display:flex;gap:22px}
+  .navlinks a{color:var(--grey-dark);text-decoration:none;font-size:.86rem;font-weight:500}
+  .navlinks a:hover{color:var(--crimson)}
+  @media(max-width:720px){.navlinks{display:none}}
+
+  .hero{max-width:1080px;margin:0 auto;padding:54px 24px 26px}
+  .hero .eyebrow{color:var(--magenta);font-weight:700;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase}
+  .hero h1{font-size:2.1rem;line-height:1.15;margin:12px 0 14px;max-width:18ch}
+  .hero p{color:var(--grey-dark);font-size:1.02rem;max-width:54ch;line-height:1.55;margin:0 0 22px}
+  .hero .cta{display:flex;gap:12px;flex-wrap:wrap}
+  .btn{border:none;border-radius:10px;padding:11px 18px;font-size:.9rem;font-weight:600;cursor:pointer}
+  .btn.primary{background:linear-gradient(135deg,var(--crimson),var(--magenta));color:#fff}
+  .btn.ghost{background:#fff;border:1px solid var(--grey-light);color:var(--ink)}
+
+  .cards{max-width:1080px;margin:0 auto;padding:14px 24px 120px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+  .card{background:#fff;border:1px solid var(--grey-light);border-radius:14px;padding:16px 16px 14px;box-shadow:var(--shadow)}
+  .card .tag{font-size:.66rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--magenta)}
+  .card h3{font-size:.98rem;margin:7px 0 5px}
+  .card p{margin:0 0 12px;color:var(--grey-dark);font-size:.82rem;line-height:1.45}
+  .card a{color:var(--crimson);font-weight:600;font-size:.82rem;text-decoration:none}
+
+  /* ---------- Floating single-line launcher (Option 3) ---------- */
+  .launcher-outer{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:50;width:min(620px,calc(100vw - 32px));border-radius:14px;background:linear-gradient(135deg,rgba(151,20,77,.35),rgba(237,17,100,.25));padding:1.5px;box-shadow:0 8px 32px rgba(0,1,4,.13),0 2px 8px rgba(151,20,77,.08);transition:opacity .2s,transform .2s}
+  .launcher-outer.hidden{opacity:0;transform:translateX(-50%) translateY(12px) scale(.95);pointer-events:none}
+  .launcher{width:100%;background:#fff;border-radius:13px;display:flex;flex-direction:column;overflow:visible;cursor:default}
+  .launcher-row{display:flex;align-items:center;gap:0;padding:0 8px 0 0;min-height:52px}
+  .launcher-logo{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--crimson),var(--magenta));display:grid;place-items:center;flex-shrink:0;margin:0 10px 0 14px}
+  .launcher-logo svg{width:13px;height:13px}
+  .launcher-placeholder{flex:1;font-size:.88rem;color:var(--grey-mid);user-select:none;line-height:1.4;cursor:text;padding:14px 0}
+  .launcher-actions{display:flex;align-items:center;gap:6px;position:relative;flex-shrink:0}
+  .attach-btn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:9px;border:1px solid var(--grey-light);background:var(--canvas);cursor:pointer;transition:border-color .15s,background .15s}
+  .attach-btn:hover{border-color:rgba(151,20,77,.4);background:#fff5f9}
+  .attach-btn svg{width:15px;height:15px;stroke:var(--grey-dark)}
+  /* Attachment dropdown */
+  .attach-menu{position:absolute;bottom:calc(100% + 10px);right:0;background:#fff;border:1px solid var(--grey-light);border-radius:12px;box-shadow:0 8px 28px rgba(0,1,4,.14);padding:6px;min-width:168px;z-index:100;opacity:0;transform:translateY(6px);pointer-events:none;transition:opacity .18s,transform .18s}
+  .attach-menu.open{opacity:1;transform:translateY(0);pointer-events:auto}
+  .attach-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;font-size:.83rem;font-weight:600;color:var(--ink);transition:background .12s}
+  .attach-item:hover{background:#fff5f9;color:var(--crimson)}
+  .attach-item svg{width:16px;height:16px;stroke:currentColor;flex-shrink:0}
+  .attach-item span{color:var(--grey-dark);font-size:.74rem;font-weight:400;display:block;margin-top:1px}
+  .launcher-send{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--crimson),var(--magenta));border:none;display:grid;place-items:center;cursor:pointer;transition:filter .15s;flex-shrink:0}
+  .launcher-send:hover{filter:brightness(1.08)}
+  .launcher-send svg{width:15px;height:15px}
+  .launcher-disclaimer{text-align:center;font-size:.62rem;color:var(--grey-mid);padding:5px 0 8px;line-height:1.4}
+  @media(max-width:520px){.launcher-outer{width:calc(100vw - 24px);bottom:14px}}
+
+  /* ---------- Chat widget ---------- */
+  .widget{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:60;width:392px;height:min(624px,calc(100dvh - 48px));background:var(--canvas);border-radius:20px;box-shadow:0 18px 60px rgba(0,1,4,.28),0 4px 14px rgba(0,1,4,.12);display:flex;flex-direction:column;overflow:hidden;transform-origin:bottom center;transition:transform .26s cubic-bezier(.2,.8,.25,1),opacity .22s;opacity:0;transform:translateX(-50%) translateY(16px) scale(.92);pointer-events:none}
+  .widget.open{opacity:1;transform:translateX(-50%) translateY(0) scale(1);pointer-events:auto}
+  @media(max-width:520px){.widget{left:0;right:0;bottom:0;width:100%;transform:none;height:100dvh;border-radius:0}.widget.open{transform:none}}
+
+  header.bar{background:linear-gradient(100deg,var(--crimson) 0%,#b3185c 55%,var(--magenta) 130%);color:#fff;padding:13px 14px;display:flex;align-items:center;gap:11px;flex:none}
+  .bar .mark{width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.16);display:grid;place-items:center;flex:none;border:1px solid rgba(255,255,255,.25)}
+  .bar .mark svg{width:20px;height:20px}
+  .htext{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+  .htext .t1{font-size:.62rem;letter-spacing:.13em;text-transform:uppercase;opacity:.85;font-weight:600}
+  .htext .t2{font-size:1rem;font-weight:700;display:flex;align-items:center;gap:7px}
+  .htext .t2 .live{width:7px;height:7px;border-radius:50%;background:#7CFFB2;box-shadow:0 0 0 3px rgba(124,255,178,.25)}
+  .closeBtn{margin-left:auto;width:32px;height:32px;border-radius:8px;border:none;background:rgba(255,255,255,.16);color:#fff;cursor:pointer;display:grid;place-items:center;flex:none}
+  .closeBtn:hover{background:rgba(255,255,255,.28)}
+  .closeBtn svg{width:18px;height:18px}
+
+  .stream{flex:1;overflow-y:auto;padding:16px 14px 6px;scroll-behavior:smooth}
+  .stream-inner{display:flex;flex-direction:column;gap:15px}
+
+  .msg{display:flex;gap:9px;align-items:flex-start;animation:rise .3s ease both}
+  @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .msg .av{width:27px;height:27px;border-radius:7px;flex:none;display:grid;place-items:center;font-size:.72rem;font-weight:700}
+  .msg.bot .av{background:linear-gradient(135deg,var(--crimson),var(--magenta));color:#fff}
+  .msg.bot .av svg{width:15px;height:15px}
+  .msg.user{flex-direction:row-reverse}
+  .msg.user .av{background:var(--ink);color:#fff}
+  .bubble{padding:11px 13px;border-radius:13px;font-size:.88rem;line-height:1.55;max-width:84%;word-wrap:break-word;overflow-wrap:anywhere}
+  .msg.bot .bubble{background:var(--panel);border:1px solid var(--grey-light);border-top-left-radius:4px;box-shadow:var(--shadow)}
+  .msg.user .bubble{background:var(--ink);color:#fff;border-top-right-radius:4px}
+  .bubble p{margin:0 0 8px}.bubble p:last-child{margin-bottom:0}
+  .bubble strong{font-weight:700}
+  .bubble ul,.bubble ol{margin:5px 0 8px;padding-left:18px}
+  .bubble li{margin:3px 0}
+  .bubble code.inline{background:#f3e7ed;color:var(--crimson);padding:1px 5px;border-radius:5px;font-size:.84em;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+  .msg.user .bubble code.inline{background:rgba(255,255,255,.18);color:#fff}
+  .codeblock{position:relative;margin:8px 0;border-radius:9px;overflow:hidden;border:1px solid #2c1f30}
+  .codeblock pre{margin:0;background:var(--code-bg);color:#f3e9ef;padding:11px 12px;overflow-x:auto;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:.74rem;line-height:1.5}
+  .copy-btn{position:absolute;top:6px;right:6px;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:6px;font-size:.64rem;padding:3px 7px;cursor:pointer;font-weight:600}
+  .copy-btn:hover{background:rgba(255,255,255,.2)}
+  .fallback{border-left:3px solid var(--magenta);background:#fff5f9;padding:9px 12px;border-radius:8px}
+  .fallback a{color:var(--crimson);font-weight:700}
+
+  .typing{display:flex;gap:4px;padding:3px 2px}
+  .typing span{width:6px;height:6px;border-radius:50%;background:var(--grey-mid);animation:blink 1.3s infinite}
+  .typing span:nth-child(2){animation-delay:.18s}.typing span:nth-child(3){animation-delay:.36s}
+  @keyframes blink{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+
+  /* ---------- Starter chips bar ---------- */
+  .chips-bar{padding:8px 12px 6px;background:#fdf9fb;border-bottom:1px solid var(--grey-light);display:flex;gap:6px;overflow-x:auto;flex-shrink:0;scrollbar-width:none}
+  .chips-bar::-webkit-scrollbar{display:none}
+  .chip{flex-shrink:0;font-size:.75rem;font-weight:600;padding:5px 12px;border-radius:20px;border:1px solid #e0c0d0;background:#fff;color:var(--crimson);cursor:pointer;white-space:nowrap;transition:background .15s,color .15s,border-color .15s}
+  .chip:hover{background:var(--crimson);color:#fff;border-color:var(--crimson)}
+
+  .followups{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px;padding-top:10px;border-top:1px dashed var(--grey-light)}
+  .followups .fu{background:#fff;border:1px solid var(--grey-light);color:var(--crimson);font-size:.76rem;padding:6px 11px;border-radius:999px;cursor:pointer;font-weight:600;transition:.15s;display:inline-flex;align-items:center;gap:6px}
+  .followups .fu:hover{border-color:var(--magenta);background:#fff5f9}
+  .followups .fu::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--magenta);flex:none}
+
+  .composer{padding:10px 12px 12px;background:var(--canvas);flex:none}
+  .composer-inner{display:flex;gap:8px;align-items:flex-end;background:var(--panel);border:1px solid var(--grey-light);border-radius:15px;padding:7px 7px 7px 13px;box-shadow:var(--shadow);transition:border-color .15s}
+  .composer-inner:focus-within{border-color:var(--magenta)}
+  textarea#input{flex:1;border:none;resize:none;outline:none;font:inherit;font-size:.88rem;line-height:1.45;max-height:120px;background:transparent;color:var(--ink);padding:5px 0}
+  #send{width:36px;height:36px;border:none;border-radius:10px;flex:none;cursor:pointer;background:linear-gradient(135deg,var(--crimson),var(--magenta));color:#fff;display:grid;place-items:center;transition:filter .15s,opacity .15s}
+  #send:hover{filter:brightness(1.08)}
+  #send:disabled{opacity:.45;cursor:not-allowed}
+  #send svg{width:17px;height:17px}
+  .disclaimer{text-align:center;font-size:.66rem;color:var(--grey-mid);line-height:1.4;margin-top:7px}
+
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto}}
+</style>
+</head>
+<body>
+  <!-- ===== Mock API Developer Portal page ===== -->
+  <nav class="topnav">
+    <div class="brand">
+      <div class="m"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2 2 21h5l5-9.5L17 21h5L12 2z"/></svg></div>
+      <b>Axis Bank <span>· API Developer Portal</span></b>
+    </div>
+    <div class="navlinks">
+      <a href="#">APIs</a><a href="#">Documentation</a><a href="#">Sandbox</a><a href="#">Support</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="eyebrow">Transaction Banking</div>
+    <h1>Build with Axis Bank Transaction Banking APIs</h1>
+    <p>Integrate payments, beneficiary management, VPA verification and account statements directly into your corporate systems. Secure, JSON-based, and JWE encrypted.</p>
+    <div class="cta">
+      <button class="btn primary">Get API keys</button>
+      <button class="btn ghost">Read the docs</button>
+    </div>
+  </section>
+
+  <section class="cards">
+    <div class="card"><div class="tag">Payments</div><h3>Payment / Fund Transfer</h3><p>NEFT, RTGS, IMPS, FT and UPI in a single transfer API.</p><a href="#">View docs →</a></div>
+    <div class="card"><div class="tag">Payments</div><h3>Get Status</h3><p>Track transaction status by customer reference number.</p><a href="#">View docs →</a></div>
+    <div class="card"><div class="tag">Beneficiary</div><h3>Payee Management</h3><p>Register beneficiaries for payouts and disbursements.</p><a href="#">View docs →</a></div>
+    <div class="card"><div class="tag">Beneficiary</div><h3>Beneficiary Enquiry</h3><p>Look up registered payees by code, date or status.</p><a href="#">View docs →</a></div>
+    <div class="card"><div class="tag">UPI</div><h3>Verify VPA</h3><p>Validate a customer UPI handle against NPCI.</p><a href="#">View docs →</a></div>
+    <div class="card"><div class="tag">Reporting</div><h3>Account Statement</h3><p>Email account statements as xls or pdf for any range.</p><a href="#">View docs →</a></div>
+  </section>
+
+  <!-- ===== Floating single-line launcher (Option 3) ===== -->
+  <div id="launcherOuter" class="launcher-outer" aria-label="Open Integration Assistant">
+    <div id="launcher" class="launcher">
+      <div class="launcher-row">
+        <div class="launcher-logo"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2 2 21h5l5-9.5L17 21h5L12 2z"/></svg></div>
+        <div class="launcher-placeholder" id="launcherTop">Ask the Integration Assistant anything…</div>
+        <div class="launcher-actions">
+          <div class="attach-btn" id="attachBtn" title="Attach file or image">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          </div>
+          <div class="attach-menu" id="attachMenu">
+            <div class="attach-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <div>Files<span>JSON, TXT, PDF…</span></div>
+            </div>
+            <div class="attach-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <div>Images<span>PNG, JPG, screenshot…</span></div>
+            </div>
+          </div>
+          <button class="launcher-send" id="launcherSend">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="launcher-disclaimer">Prototype · AI-powered · Grounded in the official Axis Bank API specs. · <strong>v8</strong></div>
+    </div>
+  </div>
+
+  <!-- ===== Chat widget ===== -->
+  <div id="widget" class="widget" role="dialog" aria-label="Integration Assistant">
+    <header class="bar">
+      <div class="mark"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2 2 21h5l5-9.5L17 21h5L12 2z"/></svg></div>
+      <div class="htext">
+        <div class="t1">Axis Bank · API Developer Portal</div>
+        <div class="t2"><span class="live"></span>Integration Assistant</div>
+      </div>
+      <button class="closeBtn" id="closeBtn" aria-label="Minimize chat">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+    </header>
+    <div class="chips-bar" id="chipsBar">
+      <button class="chip" onclick="sendChip('What are the mandatory fields?')">Mandatory Fields</button>
+      <button class="chip" onclick="sendChip('Explain the security requirements')">Security</button>
+      <button class="chip" onclick="sendChip('How does JWE encryption work?')">Encryption</button>
+      <button class="chip" onclick="sendChip('Generate a code sample in cURL')">Code Sample</button>
+      <button class="chip" onclick="sendChip('What are the common error codes?')">Error Codes</button>
+      <button class="chip" onclick="sendChip('How do I register a beneficiary?')">Beneficiary</button>
+      <button class="chip" onclick="sendChip('How do I verify a UPI VPA?')">Verify VPA</button>
+    </div>
+    <div class="stream" id="stream"><div class="stream-inner" id="streamInner"></div></div>
+    <div class="composer">
+      <div class="composer-inner">
+        <textarea id="input" rows="1" placeholder="Ask about fields, security, samples, error codes…" autocomplete="off"></textarea>
+        <div class="widget-attach-wrap" style="position:relative;flex-shrink:0">
+          <div id="widgetAttachBtn" title="Attach file or image" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;border:1px solid var(--grey-light);background:var(--canvas);cursor:pointer;transition:border-color .15s">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;stroke:var(--grey-dark)"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          </div>
+          <div id="widgetAttachMenu" class="attach-menu">
+            <div class="attach-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <div>Files<span>JSON, TXT, PDF…</span></div>
+            </div>
+            <div class="attach-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <div>Images<span>PNG, JPG, screenshot…</span></div>
+            </div>
+          </div>
+        </div>
+        <button id="send" title="Send" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+      </div>
+      <div class="disclaimer">Prototype · AI-powered · Grounded in the official Axis Bank API specs. · <strong>v8</strong></div>
+    </div>
+  </div>
+
+<script>
+/* =====================================================================
+   AXIS BANK INTEGRATION ASSISTANT v7 — Claude API powered
+   Replace YOUR_API_KEY_HERE with your actual Anthropic API key
+   ===================================================================== */
+
+const API_KEY = null; // Key is stored securely in Cloudflare Worker
+const API_URL = "https://api-proxy.nvs010293.workers.dev";
+const MODEL   = "claude-sonnet-4-6";
+
+const SYSTEM_PROMPT = `You are the Axis Bank Transaction Banking API Integration Assistant, embedded on the Axis Bank API Developer Portal. You help corporate developers integrate with Axis Bank's Transaction Banking APIs.
+
+CRITICAL RULES:
+1. Answer ONLY from the API documentation provided below. Never hallucinate fields, endpoints, or error codes.
+2. If the answer is not in the documentation, say exactly: "I don't have that information in the integration docs. Please reach out to api.connect@axis.bank.in for further support."
+3. When a user shares an error log, JSON payload, or screenshot, analyse it carefully against the spec and identify what went wrong — missing fields, wrong values, header issues, encryption errors etc.
+4. When generating code, use the exact field names, endpoints, and structure from the docs. Always include all mandatory headers.
+5. Be concise and developer-friendly. Use code blocks for JSON and code samples.
+6. RESPONSE LENGTH: Keep answers short and scannable. For overview questions (security, encryption, mandatory fields), use a brief intro + bullet list of max 6 items, each under 12 words. Never write paragraphs for overview answers. If the user wants more detail on a specific point, they will ask.
+
+═══════════════════════════════════════════════════════
+API 1: TRANSFER PAYMENT (Fund Transfer)
+═══════════════════════════════════════════════════════
+Endpoint: POST https://sakshamuat.axis.bank.in/gateway/api/txb/v3/payments/transfer-payment
+Production: https://saksham.axis.bank.in/gateway/api/txb/v3/payments/transfer-payment
+Content-Type: text/plain (JWE encrypted body)
+
+MANDATORY HEADERS:
+- X-IBM-Client-Id (string) — client ID from bank
+- X-IBM-Client-Secret (string) — client secret from bank
+- x-fapi-channel-id (AlphaNumeric 15) — channel identifier
+- x-fapi-epoch-millis (Numeric 20) — current epoch in millis, must be within 5 min of server time
+- x-fapi-uuid (AlphaNumeric 50) — unique per request, no special chars
+- x-fapi-serviceId (string) — value: OpenAPI
+- x-fapi-serviceVersion (string) — value: 1.0
+- Content-Type: text/plain
+
+MANDATORY REQUEST FIELDS (inside Data.paymentDetails[]):
+- channelId (AlphaNumeric 15) — provided during implementation
+- corpCode (AlphaNumeric 15) — corporate identifier
+- txnPaymode (char 2) — RT=RTGS(min 2L), NE=NEFT, PA=IMPS(max 5L), FT=Axis-to-Axis, UP=UPI(max 1L), CC=Cheque, DD=Demand Draft
+- custUniqRef (AlphaNumeric 30) — unique ref per txn, duplicate check within 1 FY
+- corpAccNum (AlphaNumeric 20) — debit account
+- valueDate (date yyyy-mm-dd) — must be current date
+- txnAmount (Number 15,2) — transaction amount
+- beneName (varchar2 100) — no special characters
+- beneCode (AlphaNumeric 30) — no special characters
+- beneAccNum (AlphaNumeric 50) — mandatory for RTGS/NEFT/FT/IMPS; for UPI use VPA or AccNum+IFSC
+- checksum (AlphaNumeric 255) — integrity checksum on body attributes
+
+OPTIONAL FIELDS: beneAcType, beneAddr1-3, beneCity, beneState, benePincode, beneIfscCode (mandatory for RTGS/NEFT/IMPS), beneBankName, beneEmailAddr1, beneMobileNo, txnType (CUST/MERC/DIST/INTN/VEND), enrichment1-5, senderToReceiverInfo, invoiceDetails array, authId, beneRegFlg
+
+PAYMENT MODE CODES: RT=RTGS, NE=NEFT, PA=IMPS, FT=Fund Transfer (Axis-Axis), UP=UPI, CC=Corporate Cheque, DD=Demand Draft
+
+RESPONSE: Data.data (string), Data.message, Data.status
+
+═══════════════════════════════════════════════════════
+API 2: GET STATUS
+═══════════════════════════════════════════════════════
+Endpoint: POST https://sakshamuat.axis.bank.in/gateway/api/txb/v3/acct-recon/get-status
+Production: https://saksham.axis.bank.in/gateway/api/txb/v3/acct-recon/get-status
+
+MANDATORY HEADERS: Same as Transfer Payment (X-IBM-Client-Id, X-IBM-Client-Secret, x-fapi-channel-id, x-fapi-epoch-millis, x-fapi-uuid, x-fapi-serviceId=OpenAPI, x-fapi-serviceVersion=1.0, Content-Type=text/plain)
+
+MANDATORY REQUEST FIELDS:
+- Data.channelId (AlphaNumeric 15)
+- Data.corpCode (AlphaNumeric 15)
+- Data.crn (array) — custUniqRef values passed in payment API
+- Data.checksum (AlphaNumeric 255)
+
+RESPONSE FIELDS (Data.data.CUR_TXN_ENQ[]):
+- corpCode, statusDescription, batchNo, utrNo (UTR for NEFT/RTGS, RRN for IMPS/UPI), processingDate, responseCode, crn, transactionStatus (Pending/Rejected/Processed/Return)
+
+═══════════════════════════════════════════════════════
+API 3: VERIFY VPA
+═══════════════════════════════════════════════════════
+Endpoint: POST https://sakshamuat.axis.bank.in/gateway/api/txb/v3/acct-recon/verifyVPA
+Production: https://saksham.axis.bank.in/gateway/api/txb/v3/acct-recon/verifyVPA
+
+MANDATORY HEADERS: x-fapi-channel-id(12), x-fapi-epoch-millis(20), x-fapi-uuid(50), Content-Type=text/plain, X-IBM-Client-Id, X-IBM-ClientSecret
+
+MANDATORY REQUEST FIELDS (inside Data.VerifyVPARequest):
+- merchId (VARCHAR2 100)
+- merchChanId (VARCHAR2 100)
+- customerVpa (VARCHAR2 100)
+- corpCode (AlphaNumeric 15)
+- channelId (AlphaNumeric 15)
+- checksum (AlphaNumeric 255)
+
+RESPONSE (Data.VerifyVPAResponse): code, result, customerName, vpa
+
+═══════════════════════════════════════════════════════
+API 4: BENEFICIARY REGISTRATION
+═══════════════════════════════════════════════════════
+Endpoint: POST https://sakshamuat.axis.bank.in/gateway/api/txb/v3/payee-mgmt/beneficiary-registration
+Production: https://saksham.axis.bank.in/gateway/api/txb/v3/payee-mgmt/beneficiary-registration
+
+MANDATORY HEADERS: Same as Transfer Payment
+
+MANDATORY REQUEST FIELDS:
+- Data.channelId (varchar 15)
+- Data.corpCode (varchar2 15)
+- Data.userId (varchar2 20)
+- Data.checksum (varchar2 500)
+- Data.beneinsert[].apiVersion (char 2)
+- Data.beneinsert[].beneCode (varchar2 30)
+- Data.beneinsert[].beneName (varchar2 100) — no special chars for RTGS/NEFT
+- Data.beneinsert[].beneAccNum (varchar2 50) — mandatory for RTGS/NEFT/FT
+- Data.beneinsert[].beneIfscCode (varchar2 11) — mandatory for RTGS/NEFT
+- Data.beneinsert[].beneLEI (AlphaNumeric 20) — mandatory for txns INR 50Cr+
+
+OPTIONAL: beneAcType, beneBankName, beneAddr1-3, beneCity, beneState, benePincode, beneEmailAddr1 (semicolon separated), beneMobileNo (semicolon separated, max 5)
+
+RESPONSE (Data.data.beneDetails[]): beneMobileNo, beneBankName, beneName, beneIfscCode, beneCode, beneEmailAddr1, corpCode, status, beneAccNum
+
+═══════════════════════════════════════════════════════
+API 5: BENEFICIARY ENQUIRY
+═══════════════════════════════════════════════════════
+Endpoint: POST https://sakshamuat.axis.bank.in/gateway/api/txb/v3/payee-mgmt/beneficiary-enquiry
+Production: https://saksham.axis.bank.in/gateway/api/txb/v3/payee-mgmt/beneficiary-enquiry
+
+MANDATORY HEADERS: Same as Transfer Payment
+
+MANDATORY REQUEST FIELDS:
+- Data.channelId (varchar 15)
+- Data.corpCode (varchar2 15)
+- Data.emailId (varchar2 100) — for CSV delivery if bene count > 10000
+- Data.status (varchar2 10) — 1=Active, 2=Inactive, 3=All
+- Data.checksum (varchar2 500)
+
+OPTIONAL: Data.fromDate, Data.toDate (YYYY-MM-DD), Data.beneCode (array)
+
+RESPONSE (Data.data): count, beneDetails[] with benePincode, beneCode, corpCode, beneAcType, beneMobileNo, beneBankName, beneName, authorizedBy, beneIfscCode, authorizedDate, beneEmailAddr1, beneAccNum, status
+
+═══════════════════════════════════════════════════════
+API 6: GET BALANCE
+═══════════════════════════════════════════════════════
+Endpoint: POST https://sakshamuat.axis.bank.in/gateway/api/txb/v3/acct-recon/get-balance
+Production: https://saksham.axis.bank.in/gateway/api/txb/v3/acct-recon/get-balance
+
+MANDATORY HEADERS: Same as Transfer Payment (includes x-fapi-serviceId and x-fapi-serviceVersion)
+
+MANDATORY REQUEST FIELDS:
+- Data.channelId (varchar 15)
+- Data.corpCode (varchar2 15)
+- Data.corpAccNum (varchar2 15) — corporate debit account number
+- Data.checksum (varchar 500)
+
+RESPONSE (Data.data): channelId, corpAccNum, corpCode, Balance, checksum; Data.message, Data.status
+
+═══════════════════════════════════════════════════════
+API 7: ACCOUNT VALIDATION (P2A)
+═══════════════════════════════════════════════════════
+Endpoint: POST https://sakshamuat.axis.bank.in/gateway/api/txb/v3/p2a/p2transaction
+Production: https://saksham.axis.bank.in/gateway/api/txb/v3/p2a/p2transaction
+
+MANDATORY HEADERS: x-fapi-channel-id(15), x-fapi-epoch-millis(20), x-fapi-uuid(50), Content-Type=text/plain, X-IBM-Client-Id, X-IBM-ClientSecret
+
+MANDATORY REQUEST FIELDS (inside Data.P2EnquiryRequest):
+- corpCode (AlphaNumeric 15)
+- channelId (AlphaNumeric 15)
+- remitterAcc (AlphaNumeric 20)
+- beneAccNum (AlphaNumeric 50)
+- beneIFSC (varchar2 15)
+- checksum (AlphaNumeric 255)
+
+RESPONSE (Data.P2EnquiryResponse): code, message, data, status
+
+═══════════════════════════════════════════════════════
+SECURITY — APPLIES TO ALL APIs
+═══════════════════════════════════════════════════════
+- Protocol: HTTPS with TLS 1.2 mandatory
+- Authentication: X-IBM-Client-Id + X-IBM-Client-Secret + IP Whitelisting + MTLS
+- Encryption: JWE (JSON Web Encryption) — RSA-OAEP-256 for key encryption + A256GCM for content encryption
+- Signing: RS256 (JWS Compact Serialization RFC 7515/7516)
+- MTLS: Two-way SSL, consumer must submit CSR to Axis Bank for signing
+- IP Whitelisting: Register all public static IPs with the bank
+- Checksum: Calculated on body attributes only (logic shared separately as checksum logic and code.txt)
+- Epoch millis: Must be within 5-minute window of server time or request rejected with 400 TimestampError
+- x-fapi-uuid: Must be unique per request, alphanumeric only, no special characters
+
+═══════════════════════════════════════════════════════
+ERROR CODES — ALL APIs
+═══════════════════════════════════════════════════════
+400 Bad Request:
+- TimestampError: "Request timestamp should be in the 5 minute interval" — fix epoch millis
+- sqlInjError (S001010): "Possible sql Injection threat detected" — sanitise inputs
+- xssError (S001010): "Possible XSS threat detected" — sanitise inputs
+- DecryptError (S001010): "JWE Decryption Error" — check encryption implementation and enckey
+- Headers (400): "One or more required API parameters are missing" — check all mandatory headers
+
+401 Unauthorized:
+- "Invalid client id or secret" — verify X-IBM-Client-Id and X-IBM-Client-Secret
+- ChannelId Mismatch (S001001) — channelId in header doesn't match registered value
+
+403 Forbidden: IP not whitelisted — contact bank to register IP
+
+422 Unprocessable Entity:
+- SchemaError (B001011): "Invalid object: the property 'X' is missing" — add the missing mandatory field
+- BusinessFailure (B001022): "invalid corpcode or channelId" — verify corp code and channel ID with bank
+
+429 Too Many Requests: "Assembly Rate Limit exceeded" — implement rate limiting
+
+500 Internal Server Error: "JWE Decryption Error: TypeError: Cannot read properties of null" — check encryption key/certificate setup
+
+═══════════════════════════════════════════════════════
+CODE GENERATION GUIDE
+═══════════════════════════════════════════════════════
+When generating code always:
+1. Include ALL mandatory headers
+2. Use the correct UAT endpoint URL
+3. Note that the body must be JWE encrypted before sending (RSA-OAEP-256 + A256GCM)
+4. Show the plain JSON structure first, then note encryption requirement
+5. Generate in the language the user requests (cURL, Python, Node.js, Java)
+6. Always include a note about the checksum field requirement`;
+
+/* =====================================================================
+   CONVERSATION HISTORY & ATTACHMENT STATE
+   ===================================================================== */
+let conversationHistory = [];
+let pendingAttachment = null; // {type: 'image'|'file', data: base64, mediaType: string, name: string}
+
+/* =====================================================================
+   UI — floating widget
+   ===================================================================== */
+const streamEl   = document.getElementById('stream');
+const innerEl    = document.getElementById('streamInner');
+const inputEl    = document.getElementById('input');
+const sendBtn    = document.getElementById('send');
+const widget     = document.getElementById('widget');
+const launcher   = document.getElementById('launcher');
+const launcherOuter = document.getElementById('launcherOuter');
+const closeBtn   = document.getElementById('closeBtn');
+const attachBtn  = document.getElementById('attachBtn');
+const attachMenu = document.getElementById('attachMenu');
+const launcherTop  = document.getElementById('launcherTop');
+const launcherSend = document.getElementById('launcherSend');
+const widgetAttachBtn  = document.getElementById('widgetAttachBtn');
+const widgetAttachMenu = document.getElementById('widgetAttachMenu');
+let busy = false, started = false;
+
+function openWidget(){
+  widget.classList.add('open');
+  launcherOuter.classList.add('hidden');
+  attachMenu.classList.remove('open');
+  if(!started){ started=true; init(); }
+  setTimeout(()=>inputEl.focus(), 180);
+}
+function closeWidget(){
+  widget.classList.remove('open');
+  launcherOuter.classList.remove('hidden');
+}
+
+launcherTop.onclick  = openWidget;
+launcherSend.onclick = openWidget;
+
+// Launcher attach (demo only - opens menu)
+attachBtn.onclick = function(e){
+  e.stopPropagation();
+  attachMenu.classList.toggle('open');
+};
+attachMenu.querySelectorAll('.attach-item').forEach(item=>{
+  item.onclick = function(e){ e.stopPropagation(); attachMenu.classList.remove('open'); };
+});
+
+// Widget attach — real file picker
+widgetAttachBtn.onclick = function(e){
+  e.stopPropagation();
+  widgetAttachMenu.classList.toggle('open');
+};
+widgetAttachMenu.querySelectorAll('.attach-item').forEach((item, idx)=>{
+  item.onclick = function(e){
+    e.stopPropagation();
+    widgetAttachMenu.classList.remove('open');
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = idx === 0 ? '.json,.txt,.pdf,.log,.xml,.csv' : 'image/*';
+    input.onchange = function(){
+      const file = input.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = function(ev){
+        const base64 = ev.target.result.split(',')[1];
+        const isImage = file.type.startsWith('image/');
+        pendingAttachment = {
+          type: isImage ? 'image' : 'file',
+          data: base64,
+          mediaType: file.type || (isImage ? 'image/png' : 'text/plain'),
+          name: file.name,
+          rawResult: ev.target.result
+        };
+        showAttachmentPreview(file.name, isImage);
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  };
+});
+
+function showAttachmentPreview(name, isImage){
+  let preview = document.getElementById('attachPreview');
+  if(!preview){
+    preview = document.createElement('div');
+    preview.id = 'attachPreview';
+    preview.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 12px;background:#fff5f9;border-top:1px solid #f0d0df;font-size:.78rem;color:#97144D;';
+    const composer = document.querySelector('.composer');
+    composer.parentNode.insertBefore(preview, composer);
+  }
+  preview.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="#97144D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+    <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</span>
+    <span id="removeAttach" style="cursor:pointer;font-weight:700;padding:2px 6px;border-radius:4px;background:#fce4ef">×</span>`;
+  document.getElementById('removeAttach').onclick = function(){
+    pendingAttachment = null;
+    preview.remove();
+  };
+}
+
+// Close menus on outside click
+document.addEventListener('click',function(){
+  attachMenu.classList.remove('open');
+  widgetAttachMenu.classList.remove('open');
+});
+
+closeBtn.onclick = closeWidget;
+
+/* =====================================================================
+   RENDER HELPERS
+   ===================================================================== */
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmt(s){ return s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/`([^`]+?)`/g,'<code class="inline">$1</code>'); }
+function botAvatar(){ return '<svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2 2 21h5l5-9.5L17 21h5L12 2z"/></svg>'; }
+
+function render(text){
+  const parts = text.split(/```/); let html='';
+  for(let i=0;i<parts.length;i++){
+    if(i%2===1){
+      let code = parts[i].replace(/^[a-zA-Z]*\n/,'');
+      html += `<div class="codeblock"><button class="copy-btn">Copy</button><pre>${esc(code.replace(/\n$/,''))}</pre></div>`;
+    } else html += inlineMd(parts[i]);
+  }
+  return html;
+}
+function inlineMd(seg){
+  const lines=esc(seg).split('\n'); let out='',list=null;
+  const flush=()=>{if(list){out+=`</${list}>`;list=null;}};
+  for(let raw of lines){
+    let line=raw.trim();
+    if(line===''){flush();continue;}
+    let ul=line.match(/^[-*]\s+(.*)/),ol=line.match(/^\d+\.\s+(.*)/);
+    if(ul){if(list!=='ul'){flush();out+='<ul>';list='ul';}out+=`<li>${fmt(ul[1])}</li>`;continue;}
+    if(ol){if(list!=='ol'){flush();out+='<ol>';list='ol';}out+=`<li>${fmt(ol[1])}</li>`;continue;}
+    flush();out+=`<p>${fmt(line)}</p>`;
+  }
+  flush();return out;
+}
+
+function addBot(text, typing=false){
+  const isFallback = false; // Fallback display disabled - show all responses normally
+  const w = document.createElement('div'); w.className='msg bot';
+  let inner = isFallback
+    ? `<div class="fallback">I don't have that information in the integration docs. Please reach out to <a href="mailto:api.connect@axis.bank.in">api.connect@axis.bank.in</a> for further support.</div>`
+    : render(text);
+  w.innerHTML = `<div class="av">${botAvatar()}</div><div class="bubble">${inner}</div>`;
+  innerEl.appendChild(w);
+  wireCopy(w);
+  scrollDown();
+  return w;
+}
+function addUser(text, attachName){
+  const w=document.createElement('div'); w.className='msg user';
+  let html = `<div class="bubble">${esc(text).replace(/\n/g,'<br>')}`;
+  if(attachName) html += `<div style="margin-top:6px;font-size:.73rem;opacity:.7">📎 ${esc(attachName)}</div>`;
+  html += '</div><div class="av">You</div>';
+  w.innerHTML=html; innerEl.appendChild(w); scrollDown();
+}
+function addTyping(){
+  const w=document.createElement('div'); w.className='msg bot'; w.id='typing';
+  w.innerHTML=`<div class="av">${botAvatar()}</div><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  innerEl.appendChild(w); scrollDown();
+}
+function rmTyping(){ const t=document.getElementById('typing'); if(t)t.remove(); }
+function wireCopy(scope){ scope.querySelectorAll('.copy-btn').forEach(b=>{ b.onclick=()=>{ navigator.clipboard?.writeText(b.nextElementSibling.innerText); b.textContent='Copied'; setTimeout(()=>b.textContent='Copy',1400); }; }); }
+function scrollDown(){ streamEl.scrollTop=streamEl.scrollHeight; }
+
+/* =====================================================================
+   CLAUDE API CALL
+   ===================================================================== */
+async function callClaude(userText, attachment){
+  // Build user message content
+  let userContent = [];
+
+  // Add attachment if present
+  if(attachment){
+    if(attachment.type === 'image'){
+      userContent.push({
+        type: 'image',
+        source: { type: 'base64', media_type: attachment.mediaType, data: attachment.data }
+      });
+      userContent.push({ type: 'text', text: `[User attached image: ${attachment.name}]\n\n${userText || 'Please analyse this image/screenshot and identify any integration issues based on the Axis Bank API specs.'}` });
+    } else {
+      // For non-image files, decode and send as text
+      try {
+        const decoded = atob(attachment.data);
+        userContent.push({ type: 'text', text: `[User attached file: ${attachment.name}]\n\nFile contents:\n\`\`\`\n${decoded}\n\`\`\`\n\n${userText || 'Please analyse this file and identify any integration issues based on the Axis Bank API specs.'}` });
+      } catch(e){
+        userContent.push({ type: 'text', text: `[User attached file: ${attachment.name} — could not decode]\n\n${userText}` });
+      }
+    }
+  } else {
+    userContent = userText;
+  }
+
+  // Add to history
+  conversationHistory.push({ role: 'user', content: userContent });
+
+  const response = await fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: 1024,
+      system: SYSTEM_PROMPT,
+      messages: conversationHistory
+    })
+  });
+
+  if(!response.ok){
+    const err = await response.json().catch(()=>({}));
+    throw new Error(err?.error?.message || `API error ${response.status}`);
+  }
+
+  const data = await response.json();
+  const assistantText = data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+
+  // Add assistant response to history
+  conversationHistory.push({ role: 'assistant', content: assistantText });
+
+  return assistantText;
+}
+
+/* =====================================================================
+   CHIPS
+   ===================================================================== */
+function sendChip(text){
+  // Hide chips bar after first selection — keeps the chat clean
+  const bar = document.getElementById('chipsBar');
+  if(bar) bar.style.display = 'none';
+  inputEl.value = text;
+  send();
+}
+
+/* =====================================================================
+   SEND
+   ===================================================================== */
+async function send(){
+  const text = inputEl.value.trim();
+  const attachment = pendingAttachment;
+  if((!text && !attachment) || busy) return;
+
+  busy=true; sendBtn.disabled=true;
+  addUser(text, attachment?.name);
+  inputEl.value=''; inputEl.style.height='auto';
+
+  // Clear attachment preview
+  if(attachment){
+    pendingAttachment = null;
+    const preview = document.getElementById('attachPreview');
+    if(preview) preview.remove();
+  }
+
+  addTyping();
+
+  try {
+    const reply = await callClaude(text, attachment);
+    rmTyping();
+    addBot(reply);
+  } catch(err){
+    rmTyping();
+    addBot('**Error:** ' + err.message + ' — Please try again. If this persists, contact api.connect@axis.bank.in');
+  }
+
+  busy=false; sendBtn.disabled=false; inputEl.focus();
+}
+
+/* =====================================================================
+   INIT
+   ===================================================================== */
+function init(){
+  addBot("Hi! I'm the Axis Bank Integration Assistant, powered by AI and grounded in the official Transaction Banking API specs.\n\nI can help you with:\n- **Fields & mandatory parameters** for any API\n- **Code generation** in cURL, Python, Node.js or Java\n- **Error diagnosis** — paste an error log or upload a screenshot\n- **Security setup** — JWE encryption, MTLS, headers\n\nWhat would you like help with?");
+}
+
+sendBtn.onclick = send;
+inputEl.addEventListener('keydown', e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(); } });
+inputEl.addEventListener('input', ()=>{ inputEl.style.height='auto'; inputEl.style.height=Math.min(inputEl.scrollHeight,120)+'px'; });
+</script>
+</body>
+</html>
