@@ -189,7 +189,7 @@
           </button>
         </div>
       </div>
-      <div class="launcher-disclaimer">Prototype · AI-powered · Grounded in the official Axis Bank API specs. · <strong>v10.2</strong></div>
+      <div class="launcher-disclaimer">Prototype · AI-powered · Grounded in the official Axis Bank API specs. · <strong>v10.3</strong></div>
     </div>
   </div>
 
@@ -226,7 +226,7 @@
         </div>
         <button id="send" title="Send" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
       </div>
-      <div class="disclaimer">Prototype · AI-powered · Grounded in the official Axis Bank API specs. · <strong>v10.2</strong></div>
+      <div class="disclaimer">Prototype · AI-powered · Grounded in the official Axis Bank API specs. · <strong>v10.3</strong></div>
     </div>
   </div>
 
@@ -249,6 +249,7 @@ CRITICAL RULES:
 4. When generating code, use the exact field names, endpoints, and structure from the docs. Always include all mandatory headers.
 5. Be concise and developer-friendly. Use code blocks for JSON and code samples.
 6. RESPONSE LENGTH: Keep answers short and scannable. For overview questions (security, encryption, mandatory fields), use a brief intro + bullet list of max 6 items, each under 12 words. Never write paragraphs for overview answers. If the user wants more detail on a specific point, they will ask.
+7. CONVERSATIONAL TONE: When a user expresses intent (e.g. "I want to make vendor payments", "I need to add a beneficiary", "I want to send money"), open with a warm, natural sentence acknowledging what they want to do before giving technical details. E.g. "For vendor payments, you'll typically need two APIs working together:" or "To add a beneficiary, here's what the Payee Management API needs:" — never jump straight into fields without context.
 
 ═══════════════════════════════════════════════════════
 API 1: TRANSFER PAYMENT (Fund Transfer)
@@ -722,29 +723,56 @@ document.addEventListener('click', function(e){
    ===================================================================== */
 function suggestChips(userMsg, botReply){
   const u = userMsg.toLowerCase(), r = botReply.toLowerCase();
-  if(u.includes('payment') || u.includes('fund transfer') || r.includes('transfer payment')){
-    return ['Mandatory fields','Generate cURL sample','What is checksum?','Error codes'];
+
+  // Build a pool of candidates based on context, then filter out what was just asked
+  let candidates = [];
+
+  if(u.includes('payment') || u.includes('fund transfer') || u.includes('vendor payment') || r.includes('transfer payment')){
+    candidates = ['Mandatory fields for Payment API','Generate cURL sample','What is checksum?','Payment error codes','How does JWE encryption work?'];
   }
-  if(u.includes('security') || r.includes('jwe') || r.includes('mtls')){
-    return ['How does JWE encryption work?','What is MTLS?','IP whitelisting steps'];
+  else if(u.includes('jwe') || u.includes('encrypt')){
+    candidates = ['What is MTLS?','Mandatory fields for Payment API','What is checksum?','Generate Python sample'];
   }
-  if(u.includes('beneficiar') || r.includes('beneCode')){
-    return ['Mandatory fields for beneficiary','Check beneficiary status','Generate code sample'];
+  else if(u.includes('mtls') || u.includes('mutual tls') || u.includes('certificate')){
+    candidates = ['How does JWE encryption work?','What is checksum?','Security error codes','Mandatory fields for Payment API'];
   }
-  if(u.includes('error') || r.includes('error code') || r.includes('400') || r.includes('422')){
-    return ['How to fix TimestampError?','What causes DecryptError?','Contact support'];
+  else if(u.includes('security') || u.includes('secure')){
+    candidates = ['How does JWE encryption work?','What is MTLS?','What is checksum?','Security error codes'];
   }
-  if(u.includes('vpa') || u.includes('upi') || r.includes('verifyvpa')){
-    return ['Mandatory fields for Verify VPA','Generate cURL sample','UPI payment mode'];
+  else if(u.includes('beneficiar') || u.includes('payee') || u.includes('bene') || r.includes('benecode')){
+    candidates = ['Mandatory fields for beneficiary','How to check beneficiary status','Generate code sample','Payment API overview'];
   }
-  if(u.includes('code') || u.includes('curl') || u.includes('python') || u.includes('node')){
-    return ['Generate Python sample','Generate Node.js sample','Explain the checksum field'];
+  else if(u.includes('error') || r.includes('error code') || r.includes('400') || r.includes('422')){
+    candidates = ['How to fix TimestampError?','What causes DecryptError?','Mandatory fields for Payment API','Security setup'];
   }
-  if(u.includes('status') || r.includes('get-status')){
-    return ['What is CRN?','Possible transaction statuses','Check payment error codes'];
+  else if(u.includes('vpa') || u.includes('upi') || r.includes('verifyvpa')){
+    candidates = ['Mandatory fields for Verify VPA','Generate cURL for VPA','UPI payment mode codes','What is checksum?'];
   }
-  // default fallback chips
-  return ['Mandatory fields','Security setup','Generate code sample','Error codes'];
+  else if(u.includes('curl') || u.includes('python') || u.includes('node') || u.includes('java') || u.includes('code')){
+    candidates = ['Generate Python sample','Generate Node.js sample','Mandatory fields for Payment API','What is checksum?'];
+  }
+  else if(u.includes('status') || r.includes('get-status')){
+    candidates = ['What is CRN?','Possible transaction statuses','Payment error codes','Mandatory fields for Get Status'];
+  }
+  else if(u.includes('checksum')){
+    candidates = ['How does JWE encryption work?','Mandatory fields for Payment API','Generate cURL sample'];
+  }
+  else if(u.includes('balance') || r.includes('get-balance')){
+    candidates = ['Mandatory fields for Get Balance','Payment API overview','Account Statement API'];
+  }
+  else {
+    candidates = ['Mandatory fields for Payment API','How does JWE encryption work?','Generate code sample','Payment error codes'];
+  }
+
+  // Filter out chips that closely match what the user just asked
+  const asked = u.replace(/[^a-z0-9 ]/g, '');
+  return candidates.filter(c => {
+    const chip = c.toLowerCase().replace(/[^a-z0-9 ]/g, '');
+    // Remove if more than 2 words overlap with what was asked
+    const chipWords = chip.split(' ').filter(w => w.length > 3);
+    const overlap = chipWords.filter(w => asked.includes(w)).length;
+    return overlap < 2;
+  }).slice(0, 4); // max 4 chips
 }
 
 /* =====================================================================
