@@ -69,7 +69,7 @@
   @media(max-width:520px){.launcher-outer{width:calc(100vw - 24px);bottom:14px}}
 
   /* ---------- Chat widget ---------- */
-  .widget{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:60;width:392px;height:min(624px,calc(100dvh - 48px));background:var(--canvas);border-radius:20px;box-shadow:0 18px 60px rgba(0,1,4,.28),0 4px 14px rgba(0,1,4,.12);display:flex;flex-direction:column;overflow:hidden;transform-origin:bottom center;transition:transform .26s cubic-bezier(.2,.8,.25,1),opacity .22s;opacity:0;transform:translateX(-50%) translateY(16px) scale(.92);pointer-events:none}
+  .widget{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:60;width:min(620px,calc(100vw - 32px));height:min(680px,calc(100dvh - 48px));background:var(--canvas);border-radius:20px;box-shadow:0 18px 60px rgba(0,1,4,.28),0 4px 14px rgba(0,1,4,.12);display:flex;flex-direction:column;overflow:hidden;transform-origin:bottom center;transition:transform .26s cubic-bezier(.2,.8,.25,1),opacity .22s;opacity:0;transform:translateX(-50%) translateY(16px) scale(.92);pointer-events:none}
   .widget.open{opacity:1;transform:translateX(-50%) translateY(0) scale(1);pointer-events:auto}
   @media(max-width:520px){.widget{left:0;right:0;bottom:0;width:100%;transform:none;height:100dvh;border-radius:0}.widget.open{transform:none}}
 
@@ -189,7 +189,7 @@
           </button>
         </div>
       </div>
-      <div class="launcher-disclaimer">Prototype · AI-powered · Grounded in the official Axis Bank API specs. · <strong>v9</strong></div>
+      <div class="launcher-disclaimer">Prototype · AI-powered · Grounded in the official Axis Bank API specs. · <strong>v10</strong></div>
     </div>
   </div>
 
@@ -226,7 +226,7 @@
         </div>
         <button id="send" title="Send" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
       </div>
-      <div class="disclaimer">Prototype · AI-powered · Grounded in the official Axis Bank API specs. · <strong>v9</strong></div>
+      <div class="disclaimer">Prototype · AI-powered · Grounded in the official Axis Bank API specs. · <strong>v10</strong></div>
     </div>
   </div>
 
@@ -578,6 +578,13 @@ function inlineMd(seg){
   for(let raw of lines){
     let line=raw.trim();
     if(line===''){flush();continue;}
+    // headings
+    let h3=line.match(/^###\s+(.*)/),h2=line.match(/^##\s+(.*)/),h1=line.match(/^#\s+(.*)/);
+    if(h3){flush();out+=`<p><strong>${fmt(h3[1])}</strong></p>`;continue;}
+    if(h2){flush();out+=`<p><strong>${fmt(h2[1])}</strong></p>`;continue;}
+    if(h1){flush();out+=`<p><strong>${fmt(h1[1])}</strong></p>`;continue;}
+    // horizontal rule
+    if(line.match(/^---+$/)){flush();continue;}
     let ul=line.match(/^[-*]\s+(.*)/),ol=line.match(/^\d+\.\s+(.*)/);
     if(ul){if(list!=='ul'){flush();out+='<ul>';list='ul';}out+=`<li>${fmt(ul[1])}</li>`;continue;}
     if(ol){if(list!=='ol'){flush();out+='<ol>';list='ol';}out+=`<li>${fmt(ol[1])}</li>`;continue;}
@@ -677,8 +684,39 @@ async function callClaude(userText, attachment){
    CHIPS
    ===================================================================== */
 function sendChip(text){
-  inputEl.value = text;
-  send();
+  // Make sure widget is open first, then send
+  if(!widget.classList.contains('open')) openWidget();
+  setTimeout(()=>{ inputEl.value = text; send(); }, 50);
+}
+
+/* =====================================================================
+   SUGGEST FOLLOW-UP CHIPS
+   ===================================================================== */
+function suggestChips(userMsg, botReply){
+  const u = userMsg.toLowerCase(), r = botReply.toLowerCase();
+  if(u.includes('payment') || u.includes('fund transfer') || r.includes('transfer payment')){
+    return ['Mandatory fields','Generate cURL sample','What is checksum?','Error codes'];
+  }
+  if(u.includes('security') || r.includes('jwe') || r.includes('mtls')){
+    return ['How does JWE encryption work?','What is MTLS?','IP whitelisting steps'];
+  }
+  if(u.includes('beneficiar') || r.includes('beneCode')){
+    return ['Mandatory fields for beneficiary','Check beneficiary status','Generate code sample'];
+  }
+  if(u.includes('error') || r.includes('error code') || r.includes('400') || r.includes('422')){
+    return ['How to fix TimestampError?','What causes DecryptError?','Contact support'];
+  }
+  if(u.includes('vpa') || u.includes('upi') || r.includes('verifyvpa')){
+    return ['Mandatory fields for Verify VPA','Generate cURL sample','UPI payment mode'];
+  }
+  if(u.includes('code') || u.includes('curl') || u.includes('python') || u.includes('node')){
+    return ['Generate Python sample','Generate Node.js sample','Explain the checksum field'];
+  }
+  if(u.includes('status') || r.includes('get-status')){
+    return ['What is CRN?','Possible transaction statuses','Check payment error codes'];
+  }
+  // default fallback chips
+  return ['Mandatory fields','Security setup','Generate code sample','Error codes'];
 }
 
 /* =====================================================================
@@ -705,7 +743,9 @@ async function send(){
   try {
     const reply = await callClaude(text, attachment);
     rmTyping();
-    addBot(reply);
+    // Generate contextual follow-up chips based on reply content
+    const chips = suggestChips(text, reply);
+    addBot(reply, chips);
   } catch(err){
     rmTyping();
     addBot('**Error:** ' + err.message + ' — Please try again. If this persists, contact api.connect@axis.bank.in');
