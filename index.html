@@ -231,370 +231,348 @@
   </div>
 
 <script>
-const FALLBACK = "Please reach out to api.connect@axis.bank.in";
+/* =====================================================================
+   AXIS BANK INTEGRATION ASSISTANT v7 — Claude API powered
+   Replace YOUR_API_KEY_HERE with your actual Anthropic API key
+   ===================================================================== */
 
-/* ---------- Composed, source-accurate answers ---------- */
-const A = {
-  payment:{
-    label:"Payment / Fund Transfer API",
-    overview:`The **Payment API** initiates fund transfers across NEFT, RTGS, IMPS, FT (Axis-to-Axis) and UPI. Method is \`POST\`; the endpoint URL is shared separately by the bank.\n\nRoot tags: \`TransferPaymentRequest\` > \`TransferPaymentRequestBody\`, with the actual transfer inside a \`paymentDetails\` array. It supports both a non-encrypted body and an AES-128 encrypted body (\`TransferPaymentRequestBodyEncrypted\`).\n\nAsk me for the **mandatory fields**, the **payment mode codes**, or a **UPI request sample**.`,
-    mandatory:`**Mandatory fields — Payment API** (inside \`paymentDetails\`):\n\n- \`channelId\` — varchar(10)\n- \`corpCode\` — varchar2(15), UPPER CASE\n- \`txnPaymode\` — char(2): RT/NE/PA/FT/UP/CC/DD\n- \`custUniqRef\` — varchar2(28), unique per transaction\n- \`corpAccNum\` — varchar2(15), debit account\n- \`valueDate\` — yyyy-mm-dd, always current date\n- \`txnAmount\` — number(15,2)\n- \`beneName\` — varchar2(70), must match registration\n- \`beneCode\` — varchar2(30), must match registration\n- \`beneAccNum\` — varchar2(30) (for UPI this carries the VPA)\n- \`senderToReceiverInfo\` — varchar2(30) (UPI: remarks)\n- \`checksum\` — varchar2(100)\n\nConditional: \`beneIfscCode\` is mandatory for RTGS/NEFT/IMPS; \`beneLEI\` is mandatory for transactions of INR 50 Crs and above.`,
-    fields:`**Payment API — \`paymentDetails\` fields:**\n\n- \`txnPaymode\` char(2) **(M)** — RT, NE, PA, FT, UP, CC, DD\n- \`custUniqRef\` varchar2(28) **(M)**\n- \`corpAccNum\` varchar2(15) **(M)**\n- \`valueDate\` yyyy-mm-dd **(M)** — current date\n- \`txnAmount\` number(15,2) **(M)**\n- \`beneLEI\` number(20) — M for ≥ INR 50 Crs\n- \`beneName\` varchar2(70) **(M)** — no special chars for IMPS/NEFT\n- \`beneCode\` varchar2(30) **(M)**\n- \`beneAccNum\` varchar2(30) **(M)** — VPA for UPI\n- \`beneAcType\` varchar2(2) — 10 Savings, 11 Current, 13 Cash Credit, 40 NRE, 41 NRO\n- \`beneIfscCode\` varchar2(11) — M for RTGS/NEFT/IMPS; blank for UPI/CC/DD\n- \`beneBankName\`, \`beneAddr1/2/3\`, \`beneCity\`, \`beneState\`, \`benePincode\`\n- \`baseCode\` / \`chequeNumber\` / \`chequeDate\` — for MICR cheque printing\n- \`payableLocation\`, \`printLocation\`, \`productCode\`\n- \`beneEmailAddr1\` varchar2(250), \`beneMobileNo\` varchar2(25)\n- \`Txn_type\` varchar2(4) — CUST, MERC, DIST, INTN, VEND\n- \`invoiceDetails\` (invoiceAmount, invoiceNumber, invoiceDate, cashDiscount, tax, netAmount — tilde \`~\` separated)\n- \`enrichment1\` (profile code), \`enrichment2-5\`\n- \`senderToReceiverInfo\` varchar2(30) **(M)**\n- \`checksum\` varchar2(100) **(M)**`,
-    paymentmodes:`**\`txnPaymode\` codes (Payment API):**\n\n- \`RT\` — RTGS\n- \`NE\` — NEFT\n- \`PA\` — IMPS\n- \`FT\` — Fund Transfer (Axis to Axis)\n- \`UP\` — UPI\n- \`CC\` — Corporate Cheques\n- \`DD\` — Demand Draft`,
-    sample:`**Payment API — non-encrypted UPI request sample:**\n\n\`\`\`json\n{\n  "TransferPaymentRequest": {\n    "SubHeader": {\n      "requestUUID": "ABC123",\n      "serviceRequestId": "OpenAPI",\n      "serviceRequestVersion": "1.0",\n      "channelId": "TXB"\n    },\n    "TransferPaymentRequestBody": {\n      "channelId": "TXB",\n      "corpCode": "DEMOCORP11",\n      "paymentDetails": [{\n        "txnPaymode": "UP",\n        "custUniqRef": "WTDu77826987162873200",\n        "corpAccNum": "248012910169",\n        "valueDate": "2020-03-06",\n        "txnAmount": "500.00",\n        "beneName": "RANCO INDUSTRIES",\n        "beneCode": "RAI15235",\n        "beneAccNum": "9664517972@axis",\n        "beneBankName": "STATE BANK OF INDIA",\n        "senderToReceiverInfo": "UPI Testing"\n      }],\n      "checksum": "e326c1ca326533f55d0aa93c1caffde30769a715"\n    }\n  }\n}\n\`\`\``,
-    sampleResp:`**Payment API — non-encrypted success response:**\n\n\`\`\`json\n{\n  "TransferPaymentResponse": {\n    "SubHeader": { "requestUUID":"ABC123","serviceRequestId":"OpenAPI","serviceRequestVersion":"1.0","channelId":"TXB" },\n    "TransferPaymentResponseBody": {\n      "data": "",\n      "message": "Success",\n      "status": "S"\n    }\n  }\n}\n\`\`\`\nFailure messages include \`Checksum verification failed\` and \`Corp ID not found\` (invalid corporate code or channel), both with \`status: "F"\`.`,
-    errors:`**Payment API failure responses** (\`status: "F"\`):\n\n- \`Checksum verification failed\`\n- \`Corp ID not found\` — invalid Corporate Code or Channel`
-  },
+const API_KEY = "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";
+const API_URL = "https://api.anthropic.com/v1/messages";
+const MODEL   = "claude-sonnet-4-6";
 
-  status:{
-    label:"Get Status API",
-    overview:`The **Get Status API** returns the processing status of one or more transactions. Method \`POST\`; URL shared separately.\n\nRoot tags: \`GetStatusRequest\` > \`GetStatusRequestBody\`. You query by \`crn\` (Customer Reference Number) — use an array for multiple. The response returns a \`CUR_TXN_ENQ\` array with batch number, UTR/RRN, processing date and status.`,
-    mandatory:`**Mandatory fields — Get Status request:**\n\n- \`channelId\` — varchar2(10)\n- \`corpCode\` — varchar2(15)\n- \`crn\` — varchar2(30), Customer Reference Number (array for multiple)\n- \`checksum\` — varchar2(100)`,
-    fields:`**Get Status — request body:**\n- \`channelId\` varchar2(10) **(M)**\n- \`corpCode\` varchar2(15) **(M)**\n- \`crn\` varchar2(30) **(M)** — array for multiple\n- \`checksum\` varchar2(100) **(M)**\n\n**Response — \`CUR_TXN_ENQ\` fields:** \`statusDescription\`, \`batchNo\`, \`transactionStatus\`, \`processingDate\` (DD-MM-YYYY HH24-MI-SS), \`corpCode\`, \`crn\`, \`utrNo\` (RRN for IMPS / UTR for NEFT), \`responseCode\`.`,
-    statuses:`**\`transactionStatus\` values (Get Status):**\n\n1. Pending\n2. Rejected\n3. Processed\n4. Return\n\nThe response also carries \`utrNo\` — the settlement reference (RRN for IMPS, UTR for NEFT) — and a \`responseCode\` per the code list shared by the bank.`,
-    sample:`**Get Status — non-encrypted request sample:**\n\n\`\`\`json\n{\n  "GetStatusRequest": {\n    "SubHeader": { "requestUUID":"ABC123","serviceRequestId":"OpenAPI","serviceRequestVersion":"1.0","channelId":"TXB" },\n    "GetStatusRequestBody": {\n      "channelId": "TXB",\n      "corpCode": "DEMOCORP11",\n      "crn": "338200641748800",\n      "checksum": "f55d0aa9333c1caffde30769a71e3265"\n    }\n  }\n}\n\`\`\``,
-    sampleResp:`**Get Status — success response sample:**\n\n\`\`\`json\n{\n  "GetStatusResponse": {\n    "SubHeader": { "requestUUID":"ABC123","serviceRequestId":"OpenAPI","serviceRequestVersion":"1.0","channelId":"TXB" },\n    "GetStatusResponseBody": {\n      "data": {\n        "CUR_TXN_ENQ": [{\n          "corpCode": "DEMOCORP87",\n          "statusDescription": "Success",\n          "batchNo": "784",\n          "utrNo": "CB0001862516",\n          "processingDate": "17-02-2021 18:54:35",\n          "responseCode": "000",\n          "crn": "342524535220",\n          "transactionStatus": "PROCESSED"\n        }],\n        "checksum": "b854eae396975d34dc4d1f1522458623"\n      },\n      "message": "Success",\n      "status": "S"\n    }\n  }\n}\n\`\`\``,
-    errors:`**Get Status failure example:** message \`-> corpCode can't have Special Char.\` with \`status: "F"\`.`
-  },
+const SYSTEM_PROMPT = `You are the Axis Bank Transaction Banking API Integration Assistant, embedded on the Axis Bank API Developer Portal. You help corporate developers integrate with Axis Bank's Transaction Banking APIs.
 
-  payee:{
-    label:"Payee Management API",
-    overview:`The **Payee Management API** (Release 1.3) registers beneficiaries. Method \`POST\`; URL shared separately.\n\nRoot tags: \`BeneficiaryRegistrationRequest\` > \`BeneficiaryRegistrationRequestBody\`, with beneficiaries inside a \`beneinsert\` array. Each entry needs \`apiVersion\` \`"1.0"\`.`,
-    mandatory:`**Mandatory fields — Payee Management:**\n\n- \`channelId\` — varchar(255)\n- \`corpCode\` — varchar2(255)\n- \`userId\` — varchar2(20), initiating user\n- inside \`beneinsert\`: \`apiVersion\` char(2) \`"1.0"\`, \`beneCode\` varchar2(30), \`beneName\` varchar2(100), \`beneAccNum\` varchar2(30) (M for RTGS/NEFT/FT)\n- \`checksum\` — varchar2(255)\n\n\`beneIfscCode\` is mandatory for RTGS and NEFT.`,
-    fields:`**Payee Management — \`beneinsert\` fields:**\n- \`apiVersion\` char(2) **(M)** — "1.0"\n- \`beneLEI\` number(20)\n- \`beneCode\` varchar2(30) **(M)**\n- \`beneName\` varchar2(100) **(M)** — no special chars for RTGS/NEFT\n- \`beneAccNum\` varchar2(30) **(M for RTGS/NEFT/FT)**\n- \`beneIfscCode\` varchar2(30) — M for RTGS/NEFT\n- \`beneAcType\` varchar2(2), \`beneBankName\` varchar2(100)\n- \`beneAddr1/2/3\`, \`beneCity\`, \`beneState\`, \`benePincode\` varchar2(7)\n- \`beneEmailAddr1\` varchar2(250) — multiple with \`;\`\n- \`beneMobileNo\` varchar2(54) — multiple with \`;\`, max 5\n\nPlus body-level \`channelId\`, \`corpCode\`, \`userId\`, \`checksum\` varchar2(255).`,
-    sample:`**Payee Management — non-encrypted request sample:**\n\n\`\`\`json\n{\n  "BeneficiaryRegistrationRequest": {\n    "SubHeader": { "requestUUID":"ABC123","serviceRequestId":"OpenAPI","serviceRequestVersion":"1.0","channelId":"TXB" },\n    "BeneficiaryRegistrationRequestBody": {\n      "channelId": "TXB",\n      "corpCode": "DEMOCORP11",\n      "userId": "ACC0336231165147",\n      "beneinsert": [{\n        "apiVersion": "1.0",\n        "beneLEI": "982034569812",\n        "beneCode": "VEND01264215",\n        "beneName": "Sangeetha Mobiles Pvt ltd",\n        "beneAccNum": "5230330001915",\n        "beneIfscCode": "HDFC0000523",\n        "beneAcType": "10",\n        "beneBankName": "HDFC Bank",\n        "beneEmailAddr1": "Bhuvaneshwari@sangeethamobiles.com",\n        "beneMobileNo": "7719871404"\n      }],\n      "checksum": "e326c1ca326533f55d0aa93c1caffde30769a715"\n    }\n  }\n}\n\`\`\``,
-    sampleResp:`**Payee Management — success response (data.beneDetails):**\n\n\`\`\`json\n{\n  "BeneficiaryRegistrationResponseBody": {\n    "data": {\n      "beneDetails": [{\n        "beneMobileNo": "7719871404",\n        "beneBankName": "HDFC Bank",\n        "beneName": "Sangeetha Mobiles Pvt ltd",\n        "beneIfscCode": "HDFC0000523",\n        "beneCode": "VEND01264215",\n        "beneEmailAddr1": "Bhuvaneshwari@sangeethamobiles.com",\n        "corpCode": "DEMOCORP11",\n        "status": "ACTIVE",\n        "beneAccNum": "5230330001915"\n      }],\n      "checksum": "c1ca326533f55d0aa93c1caffde30769a71e3265"\n    },\n    "message": "Success",\n    "status": "S"\n  }\n}\n\`\`\``,
-    errors:`**Payee Management failure example:** message \`-> corpCode can't be blank.\` with \`status: "F"\`.`
-  },
+CRITICAL RULES:
+1. Answer ONLY from the API documentation provided below. Never hallucinate fields, endpoints, or error codes.
+2. If the answer is not in the documentation, say exactly: "I don't have that information in the integration docs. Please reach out to api.connect@axis.bank.in for further support."
+3. When a user shares an error log, JSON payload, or screenshot, analyse it carefully against the spec and identify what went wrong — missing fields, wrong values, header issues, encryption errors etc.
+4. When generating code, use the exact field names, endpoints, and structure from the docs. Always include all mandatory headers.
+5. Be concise and developer-friendly. Use code blocks for JSON and code samples.
 
-  beneenquiry:{
-    label:"Beneficiary Enquiry API",
-    overview:`The **Beneficiary Enquiry API** looks up registered beneficiaries for a corporate. Method \`POST\`; URL shared separately.\n\nRoot tags: \`BeneficiaryEnquiryRequest\` > \`BeneficiaryEnquiryRequestBody\`. You can filter by \`beneCode\`, \`fromDate\`/\`toDate\` and \`status\` (Active/Inactive/All). If more than 10,000 bene codes are registered, results are emailed as a .csv to \`emailId\`.`,
-    mandatory:`**Mandatory fields — Beneficiary Enquiry:**\n\n- \`channelId\` — varchar(255)\n- \`corpCode\` — varchar2(255)\n- \`emailId\` — varchar2(255) (CSV destination when > 10,000 benes)\n- \`status\` — varchar2(255): Active / Inactive / All\n- \`checksum\` — varchar2(500)\n\nOptional: \`beneCode\` (array), \`fromDate\`, \`toDate\` (YYYY-MM-DD).`,
-    fields:`**Beneficiary Enquiry — request body:**\n- \`channelId\` varchar(255) **(M)**, \`corpCode\` varchar2(255) **(M)**\n- \`beneCode\` varchar2(30) (optional, array)\n- \`fromDate\` / \`toDate\` YYYY-MM-DD (optional)\n- \`emailId\` varchar2(255) **(M)**\n- \`status\` varchar2(255) **(M)** — Active/Inactive/All\n- \`checksum\` varchar2(500) **(M)**\n\n**Response — data:** \`count\`, \`checksum\`, and \`beneDetails[]\` (benePincode, beneCode, corpCode, beneAcType, beneMobileNo, beneBankName, beneName, beneIfscCode, authorizedBy, authorizedDate, beneEmailAddr1, beneAccNum, status).`,
-    sample:`**Beneficiary Enquiry — request sample:**\n\n\`\`\`json\n{\n  "BeneficiaryEnquiryRequest": {\n    "SubHeader": { "requestUUID":"ABC123","serviceRequestId":"OpenAPI","serviceRequestVersion":"1.0","channelId":"TXB" },\n    "BeneficiaryEnquiryRequestBody": {\n      "channelId": "TXB",\n      "corpCode": "DEMOCORP87",\n      "fromDate": "2020-01-01",\n      "toDate": "2021-11-01",\n      "emailId": "Bhuvaneshwari@sangeethamobiles.com",\n      "status": "All",\n      "beneCode": ["NOTIFSC"],\n      "checksum": "2cd88677a293aba12210a9563c93d808"\n    }\n  }\n}\n\`\`\``,
-    sampleResp:`**Beneficiary Enquiry — success response (data):**\n\n\`\`\`json\n{\n  "data": {\n    "count": 1,\n    "checksum": "c59032929c876ef5e04d027b419d9c3d",\n    "beneDetails": [{\n      "benePincode": "400708",\n      "beneCode": "VEND01264215",\n      "corpCode": "DEMOCORP87",\n      "beneMobileNo": "7719871404",\n      "beneBankName": "HDFC Bank",\n      "beneName": "Sangeetha Mobiles Pvt ltd",\n      "beneIfscCode": "HDFC0000985",\n      "beneEmailAddr1": "Bhuvaneshwari@sangeethamobiles.com",\n      "beneAccNum": "50100014174568",\n      "status": "Active"\n    }]\n  },\n  "message": "Success",\n  "status": "S"\n}\n\`\`\``
-  },
+═══════════════════════════════════════════════════════
+API 1: TRANSFER PAYMENT (Fund Transfer)
+═══════════════════════════════════════════════════════
+Endpoint: POST https://sakshamuat.axis.bank.in/gateway/api/txb/v3/payments/transfer-payment
+Production: https://saksham.axis.bank.in/gateway/api/txb/v3/payments/transfer-payment
+Content-Type: text/plain (JWE encrypted body)
 
-  verifyvpa:{
-    label:"Verify VPA API",
-    overview:`The **Verify VPA API** validates a customer's UPI VPA against NPCI and returns the mapped customer name. Method \`POST\`; URL shared separately.\n\nRoot tags: \`VerifyVPARequest\` > \`VerifyVPARequestBody\`. On success it returns \`code\` \`"00"\`, \`result\` \`"SUCCESS"\`, \`customerName\` and \`vpa\`.`,
-    mandatory:`**Mandatory fields — Verify VPA:**\n\n- \`channelId\` — varchar2(10)\n- \`corpCode\` — varchar2(15)\n- \`merchId\` — varchar2(100), mapped to corp code\n- \`merchChanId\` — varchar2(100), mapped to corp code\n- \`customerVpa\` — varchar2(100)\n- \`checksum\` — varchar2(100)`,
-    fields:`**Verify VPA — request body:** \`channelId\` varchar2(10) **(M)**, \`corpCode\` varchar2(15) **(M)**, \`merchId\` varchar2(100) **(M)**, \`merchChanId\` varchar2(100) **(M)**, \`customerVpa\` varchar2(100) **(M)**, \`checksum\` varchar2(100) **(M)**.\n\n**Response:** \`code\`, \`result\`, \`customerName\`, \`vpa\`.`,
-    errors:`**Verify VPA — NPCI error codes:**\n\n- \`MM2\` — MAPPING_DOES_NOT_EXIST (invalid UPI number)\n- \`MM3\` — MAPPING_BLOCKED (UPI number blocked)\n- \`MM4\` — MAPPING_INACTIVE (UPI number inactive)\n\nA failure response looks like \`{ "code": "MM2", "result": "Mapping_Does_Not_Exist" }\`.`,
-    sample:`**Verify VPA — request sample:**\n\n\`\`\`json\n{\n  "VerifyVPARequest": {\n    "SubHeader": { "requestUUID":"ABC123","serviceRequestId":"OpenAPI","serviceRequestVersion":"1.0","channelId":"TXB" },\n    "VerifyVPARequestBody": {\n      "merchId": "HDFCERGO10035638",\n      "merchChanId": "HDFCERGOAPP10035638",\n      "customerVpa": "982057027",\n      "corpCode": "DEMOCORP55",\n      "channelId": "TXB",\n      "checksum": "b6976848282cc5731bb8"\n    }\n  }\n}\n\`\`\``,
-    sampleResp:`**Verify VPA — success response:**\n\n\`\`\`json\n{\n  "VerifyVPAResponseBody": {\n    "code": "00",\n    "result": "SUCCESS",\n    "customerName": "DINESHCHANDRA BHANUPRASAD DAVE",\n    "vpa": "din9476@axis"\n  }\n}\n\`\`\``
-  },
+MANDATORY HEADERS:
+- X-IBM-Client-Id (string) — client ID from bank
+- X-IBM-Client-Secret (string) — client secret from bank
+- x-fapi-channel-id (AlphaNumeric 15) — channel identifier
+- x-fapi-epoch-millis (Numeric 20) — current epoch in millis, must be within 5 min of server time
+- x-fapi-uuid (AlphaNumeric 50) — unique per request, no special chars
+- x-fapi-serviceId (string) — value: OpenAPI
+- x-fapi-serviceVersion (string) — value: 1.0
+- Content-Type: text/plain
 
-  statement:{
-    label:"Account Statement API",
-    overview:`The **Account Statement API** (Release 1.0) emails an account statement for a date range. Method \`POST\`; URL shared separately.\n\nRoot tags: \`GetAccountStatementRequest\` > \`GetAccountStatementRequestBody\`. The statement is delivered to \`emailId\` in the requested \`format\` (1 = xls, 2 = pdf). Note: this API also uses OAuth 2.0 / tokenization on top of the common security.`,
-    mandatory:`**Mandatory fields — Account Statement (all are mandatory):**\n\n- \`channelId\` — varchar2(15)\n- \`corpCode\` — varchar2(15)\n- \`corpAccNum\` — varchar2(15)\n- \`userId\` — varchar2(20)\n- \`stmtFromDate\` / \`stmtToDate\` — YYYY-MM-DD\n- \`emailId\` — varchar(1000), multiple separated by \`;\`\n- \`format\` — 1 (xls) or 2 (pdf)\n- \`checksum\` — varchar2(500)`,
-    fields:`**Account Statement — request body** (all mandatory): \`channelId\` varchar2(15), \`corpCode\` varchar2(15), \`corpAccNum\` varchar2(15), \`userId\` varchar2(20), \`stmtFromDate\`, \`stmtToDate\` (YYYY-MM-DD), \`emailId\` varchar(1000) (multiple with \`;\`), \`format\` (1=xls, 2=pdf), \`checksum\` varchar2(500).`,
-    formats:`**Account Statement \`format\` values:**\n\n- \`1\` — xls\n- \`2\` — pdf\n\nThe file is emailed to the \`emailId\`(s) provided (multiple separated by \`;\`).`,
-    sample:`**Account Statement — request sample:**\n\n\`\`\`json\n{\n  "GetAccountStatementRequest": {\n    "SubHeader": { "requestUUID":"ABC123","serviceRequestId":"OpenAPI","serviceRequestVersion":"1.0","channelId":"TXB" },\n    "GetAccountStatementRequestBody": {\n      "channelId": "TXB",\n      "corpCode": "DEMOCORP17",\n      "corpAccNum": "917010028862747",\n      "userId": "45698",\n      "stmtFromDate": "2020-10-01",\n      "stmtToDate": "2020-11-02",\n      "emailId": "abc@abc.com",\n      "format": "1",\n      "checksum": "6fcd46cc84e3086c6eddee67cc1bf3dd"\n    }\n  }\n}\n\`\`\``,
-    sampleResp:`**Account Statement — success response:**\n\n\`\`\`json\n{\n  "GetAccountStatementResponseBody": {\n    "data": "",\n    "message": "Success",\n    "status": "S"\n  }\n}\n\`\`\`\nFailure example: message \`Checksum verification failed\`, \`status: "F"\`.`
-  }
-};
+MANDATORY REQUEST FIELDS (inside Data.paymentDetails[]):
+- channelId (AlphaNumeric 15) — provided during implementation
+- corpCode (AlphaNumeric 15) — corporate identifier
+- txnPaymode (char 2) — RT=RTGS(min 2L), NE=NEFT, PA=IMPS(max 5L), FT=Axis-to-Axis, UP=UPI(max 1L), CC=Cheque, DD=Demand Draft
+- custUniqRef (AlphaNumeric 30) — unique ref per txn, duplicate check within 1 FY
+- corpAccNum (AlphaNumeric 20) — debit account
+- valueDate (date yyyy-mm-dd) — must be current date
+- txnAmount (Number 15,2) — transaction amount
+- beneName (varchar2 100) — no special characters
+- beneCode (AlphaNumeric 30) — no special characters
+- beneAccNum (AlphaNumeric 50) — mandatory for RTGS/NEFT/FT/IMPS; for UPI use VPA or AccNum+IFSC
+- checksum (AlphaNumeric 255) — integrity checksum on body attributes
 
-/* ---------- Global (cross-API) answers ---------- */
-const G = {
-  security:`**Security considerations (all APIs):**\n\n1. **HTTPS + two-way SSL** — invoke over HTTPS. Two-way SSL is established, so your consumer certificate is validated; you must have a certificate and share it with Axis Bank as a prerequisite.\n2. **IP whitelisting** — only selected IP addresses may reach the application over the internet, so your consuming IPs must be whitelisted first.\n3. **Symmetric encryption** — the request body must be encrypted with **AES-128**. The encryption key is provided by the bank and is different for each consumer.\n\nThe **Account Statement API** additionally uses **OAuth 2.0 / tokenization** — a token valid for a designated duration is generated and must be passed in a header when invoking the OTP validation API.`,
-  headers:`**HTTP headers (every request):**\n\n- \`Content-Type\` — \`application/json\`\n- \`X-IBM-Client-Id\` — unique per client, provided by Axis Bank\n- \`X-IBM-Client-Secret\` — unique per client, provided by Axis Bank\n\n**API Connect SubHeader** (same in request & response):\n- \`requestUUID\` (40) — unique alphanumeric, no special characters\n- \`serviceRequestId\` (30)\n- \`serviceRequestVersion\` (3) — e.g. "1.0"\n- \`channelId\` (10) — client-specific, also used to decrypt the encrypted request body (sample value: \`TXB\`)`,
-  checksum:`**Checksum:** a value used to verify the integrity of the data transfer. For **requests** it is calculated only on the attributes within the **body**; for **responses** it is calculated on the attributes within **data**. The field length varies by API (varchar2(100) up to varchar2(500)).\n\nThe specs describe what the checksum is and where it sits, but the actual checksum-generation code/algorithm is not included in them. For the sample checksum logic: ${"$"+"{EMAIL}"}`,
-  encryption:`**Encryption:** request bodies are encrypted using **AES-128** symmetric encryption. The key is provided by the bank and differs per consumer. The \`channelId\` is used to decrypt the encrypted body on the bank side. Each API offers an encrypted variant (e.g. \`TransferPaymentRequestBodyEncrypted\`).\n\nThe specs reference a sample encryption/decryption code section, but the actual code is not contained in them. For that sample code: ${"$"+"{EMAIL}"}`,
-  url:`The endpoint **URL for each API is shared separately by Axis Bank** — it is not published in these specifications. All APIs use the \`POST\` method. For the URL applicable to your setup: ${"$"+"{EMAIL}"}`,
-  coding:`**How to call any of these APIs (per the specs):**\n\n1. Send a \`POST\` request to the API URL (shared separately by the bank).\n2. Set headers: \`Content-Type: application/json\`, \`X-IBM-Client-Id\`, \`X-IBM-Client-Secret\`.\n3. Build the JSON body with the **SubHeader** (\`requestUUID\`, \`serviceRequestId\`, \`serviceRequestVersion\`, \`channelId\`) plus the API's request body.\n4. Compute the **checksum** over the body attributes and include it.\n5. For the encrypted variant, **AES-128** encrypt the body and send it as \`…RequestBodyEncrypted\`.\n6. Connect over **HTTPS with two-way SSL** from a **whitelisted IP**.\n\nTell me which API you're integrating and I'll give you its exact request sample. Note: the actual encryption/decryption and checksum source code is not part of these specs — for that, ${"$"+"{EMAIL}"}`
-};
+OPTIONAL FIELDS: beneAcType, beneAddr1-3, beneCity, beneState, benePincode, beneIfscCode (mandatory for RTGS/NEFT/IMPS), beneBankName, beneEmailAddr1, beneMobileNo, txnType (CUST/MERC/DIST/INTN/VEND), enrichment1-5, senderToReceiverInfo, invoiceDetails array, authId, beneRegFlg
 
-/* ---------- Detection vocabularies ---------- */
-/* ---------- Intent patterns (before API/facet matching) ---------- */
-const INTENTS = [
-  {
-    pattern: /vendor pay|pay vendor|make vendor|vendor payment|supplier pay|pay supplier|pay my vendor|disburse payment|bulk pay|make pay|initiate pay|send pay|transfer money|send money|fund transfer|i need to pay|how do i pay|how to pay|initiate transfer|make transfer|payment to/,
-    title: "Making payments",
-    intro: "For sending payments, you'll typically need a few APIs working together:",
-    apis: [
-      { key:"payment",   label:"Payment / Fund Transfer API", desc:"Initiate NEFT, RTGS, IMPS, UPI or Axis-to-Axis transfers in a single call." },
-      { key:"payee",     label:"Payee Management API",        desc:"Register the vendor/beneficiary first — the Payment API references their beneCode." },
-      { key:"status",    label:"Get Status API",              desc:"Track payment confirmation by your Customer Reference Number (CRN)." }
-    ]
-  },
-  {
-    pattern: /beneficiar|bene |payee|onboard vendor|manage vendor|vendor list|register vendor|add vendor|new vendor|manage payee/,
-    title: "Managing beneficiaries",
-    intro: "For beneficiary management, here are the two relevant APIs:",
-    apis: [
-      { key:"payee",       label:"Payee Management API",      desc:"Add or update beneficiaries — each gets a unique beneCode used in payments." },
-      { key:"beneenquiry", label:"Beneficiary Enquiry API",   desc:"Look up your registered beneficiaries by code, date range or status." }
-    ]
-  },
-  {
-    pattern: /\bupi\b|vpa|upi handle|verify upi|validate upi|check upi|upi payment|pay via upi/,
-    title: "UPI payments",
-    intro: "For UPI-based flows, here are the two APIs you'll need:",
-    apis: [
-      { key:"verifyvpa", label:"Verify VPA API",              desc:"Validate a customer's UPI handle against NPCI before initiating payment." },
-      { key:"payment",   label:"Payment / Fund Transfer API", desc:"Send a UPI payment using txnPaymode: UP — beneAccNum carries the VPA." }
-    ]
-  },
-  {
-    pattern: /reconcil|transaction history|audit|report|account statement|bank statement|download statement/,
-    title: "Reporting & reconciliation",
-    intro: "For transaction reporting and reconciliation:",
-    apis: [
-      { key:"statement", label:"Account Statement API",       desc:"Get an account statement for any date range, emailed as XLS or PDF." },
-      { key:"status",    label:"Get Status API",              desc:"Check individual transaction status and UTR/RRN by CRN." }
-    ]
-  }
-];
+PAYMENT MODE CODES: RT=RTGS, NE=NEFT, PA=IMPS, FT=Fund Transfer (Axis-Axis), UP=UPI, CC=Corporate Cheque, DD=Demand Draft
 
-function resolveIntent(n){
-  for(const intent of INTENTS){
-    if(intent.pattern.test(n)){
-      return intent;
-    }
-  }
-  return null;
-}
+RESPONSE: Data.data (string), Data.message, Data.status
 
-function intentSugg(apis){
-  return apis.map(a=>s(a.label, "Walk me through the "+a.label));
-}
+═══════════════════════════════════════════════════════
+API 2: GET STATUS
+═══════════════════════════════════════════════════════
+Endpoint: POST https://sakshamuat.axis.bank.in/gateway/api/txb/v3/acct-recon/get-status
+Production: https://saksham.axis.bank.in/gateway/api/txb/v3/acct-recon/get-status
 
-function intentResponse(intent){
-  let text = intent.intro+"\n\n";
-  for(const a of intent.apis){
-    text += `**${a.label}** — ${a.desc}\n\n`;
-  }
-  text += "Which one would you like to start with?";
-  return R(text, intentSugg(intent.apis));
-}
+MANDATORY HEADERS: Same as Transfer Payment (X-IBM-Client-Id, X-IBM-Client-Secret, x-fapi-channel-id, x-fapi-epoch-millis, x-fapi-uuid, x-fapi-serviceId=OpenAPI, x-fapi-serviceVersion=1.0, Content-Type=text/plain)
 
-const API_KEYS = {
-  verifyvpa:["verify vpa","validate vpa","customervpa","npci","verifyvpa","upi handle","verify upi","validate upi","check vpa","mm2","mm3","mm4"],
-  payment:["payment","fund transfer","transfer api","make a payment","make payment","disburse","txnpaymode","neft","rtgs","imps"," ft ","transferpayment","send money","initiate payment","pay a","upi","upi payment"],
-  status:["get status","status api","transaction status","check status","payment status","crn","utr","rrn","batch number","batchno","cur_txn_enq","getstatus"],
-  payee:["payee management","register beneficiary","beneficiary registration","add beneficiary","add payee","register payee","create beneficiary","beneinsert","payee api","onboard beneficiary","register a beneficiary","registering beneficiary"],
-  beneenquiry:["beneficiary enquiry","bene enquiry","beneenquiry","list beneficiar","lookup beneficiar","search beneficiar","enquire benef","fetch beneficiar","registered beneficiar","enquiry api"],
-  statement:["account statement","statement api","statement","get statement","bank statement"]
-};
-const OUT_OF_SCOPE = ["balance","limit","mandate","collection","loan","deposit","forex","escrow","virtual account","direct debit","e-nach","enach","webhook","rate limit","sandbox key"];
-const FACET_KEYS = {
-  security:["security","ssl","https","whitelist","ip address","certificate","two way","two-way","secure connection","security parameter","security requirement","security like","how secure","is it secure","what is the security","security setup","secure api","security for","security of"],
-  headers:["header","headers","subheader","sub header","client id","client-id","client secret","content-type","x-ibm","requestuuid","servicerequestid"],
-  checksum:["checksum","checksums","integrity","hash","digest"],
-  encryption:["encrypt","encrypted","encryption","decrypt","cipher","symmetric","aes"],
-  url:["url","endpoint","base url","host","domain","which url","where do i send"],
-  coding:["coding","how to call","how do i call","how to integrate","integrate","implement","invoke","consume","steps to","how to use","call the api","make the call","curl","postman","code the","generate code","write code","code for","scaffold","sample code","working code","code example","show code"],
-  paymentmodes:["payment mode","txnpaymode","mode codes","what modes","types of payment","payment types"],
-  statuses:["status values","transaction status","pending","processed","returned","return status","rejected","statuses","status codes"],
-  formats:["format","formats","xls","pdf","file type","output format"],
-  errors:["error","errors","error code","failure","failed","reject","decline","fault","negative scenario","what errors"],
-  sample:["sample","example","json","payload","request body","show me","give me","snippet","structure of","what does the request"],
-  mandatory:["mandatory","required field","which fields are required","compulsory","must pass","minimum fields","required parameters"],
-  fields:["fields","parameters","params","field list","attributes","schema","data elements","what are the fields"]
-};
-const GREET = ["hi","hello","hey","yo","what can you do","help","who are you","what do you do","capabilities","get started","start","good morning","good evening"];
+MANDATORY REQUEST FIELDS:
+- Data.channelId (AlphaNumeric 15)
+- Data.corpCode (AlphaNumeric 15)
+- Data.crn (array) — custUniqRef values passed in payment API
+- Data.checksum (AlphaNumeric 255)
 
-/* ---------- Matcher ---------- */
-function norm(s){return (" "+s.toLowerCase().replace(/[^a-z0-9@]+/g," ").replace(/\s+/g," ")+" ");}
-function escRe(s){return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");}
-function hit(n,p){ return p.includes(" ") ? n.includes(p) : new RegExp("\\b"+escRe(p)+"\\b").test(n); }
-function score(n,keys){ let s=0; for(const p of keys){ if(hit(n,p)) s+= p.trim().includes(" ")?2:1; } return s; }
-function best(n,dict){ let bk=null,bs=0; for(const k in dict){ const s=score(n,dict[k]); if(s>bs){bs=s;bk=k;} } return {k:bk,s:bs}; }
+RESPONSE FIELDS (Data.data.CUR_TXN_ENQ[]):
+- corpCode, statusDescription, batchNo, utrNo (UTR for NEFT/RTGS, RRN for IMPS/UPI), processingDate, responseCode, crn, transactionStatus (Pending/Rejected/Processed/Return)
 
-/* ---------- Suggestion helpers ---------- */
-function s(l,q){return {l:l,q:q};}
-const HOME=[s("Payment API","Walk me through the Payment API"),s("Get Status","How does the Get Status API work?"),s("Verify VPA","How does Verify VPA work and what are its error codes?"),s("Security","What are the security requirements?")];
-function suggFor(api,f,node){
-  const samp=s("Request sample","Show a "+node.label+" request sample");
-  const resp=s("Response sample","Show a "+node.label+" response sample");
-  const mand=s("Mandatory fields","Mandatory fields for "+node.label);
-  const flds=s("All fields","Field list for "+node.label);
-  const sec=s("Security","What are the security requirements?");
-  switch(api){
-    case "payment":
-      if(f==="sample") return [resp,mand,s("Payment modes","List the txnPaymode codes")];
-      if(f==="paymentmodes") return [mand,samp];
-      return [mand,s("Payment modes","List the txnPaymode codes"),samp,sec];
-    case "status":
-      if(f==="sample") return [resp,s("Transaction statuses","What transaction statuses are returned?")];
-      if(f==="statuses") return [samp,resp];
-      return [samp,s("Transaction statuses","What transaction statuses are returned?"),mand];
-    case "payee":
-      if(f==="sample") return [resp,mand];
-      return [mand,samp,flds];
-    case "beneenquiry":
-      if(f==="sample") return [resp,flds];
-      return [samp,flds,mand];
-    case "verifyvpa":
-      if(f==="errors") return [samp,mand];
-      if(f==="sample") return [resp,s("Error codes","What are the Verify VPA error codes?")];
-      return [s("Error codes","What are the Verify VPA error codes?"),samp,mand];
-    case "statement":
-      if(f==="sample") return [resp,s("File formats","What formats does the Account Statement API support?")];
-      return [mand,samp,s("File formats","What formats does the Account Statement API support?")];
-  }
-  return HOME;
-}
+═══════════════════════════════════════════════════════
+API 3: VERIFY VPA
+═══════════════════════════════════════════════════════
+Endpoint: POST https://sakshamuat.axis.bank.in/gateway/api/txb/v3/acct-recon/verifyVPA
+Production: https://saksham.axis.bank.in/gateway/api/txb/v3/acct-recon/verifyVPA
 
-function R(text,sugg){return {text:text,sugg:sugg||[]};}
+MANDATORY HEADERS: x-fapi-channel-id(12), x-fapi-epoch-millis(20), x-fapi-uuid(50), Content-Type=text/plain, X-IBM-Client-Id, X-IBM-ClientSecret
 
-function resolve(query){
-  const n=norm(query);
+MANDATORY REQUEST FIELDS (inside Data.VerifyVPARequest):
+- merchId (VARCHAR2 100)
+- merchChanId (VARCHAR2 100)
+- customerVpa (VARCHAR2 100)
+- corpCode (AlphaNumeric 15)
+- channelId (AlphaNumeric 15)
+- checksum (AlphaNumeric 255)
 
-  // small talk — keep it human
-  if(/\b(thanks|thank you|thx|ty|cheers|appreciate)\b/.test(n))
-    return R("Anytime — glad that helped. Want to look at another API or grab a sample?", HOME);
-  if(/\b(bye|goodbye|see you|that's all|thats all|nothing else)\b/.test(n))
-    return R("Sounds good — ping me here whenever you're integrating. Best of luck with the build!");
-  if(n.trim().split(" ").length<=3 && /\b(ok|okay|cool|nice|great|got it|gotcha|perfect|awesome|alright|sweet)\b/.test(n))
-    return R("👍 What else can I pull up for you?", HOME);
+RESPONSE (Data.VerifyVPAResponse): code, result, customerName, vpa
 
-  // greeting / capability
-  if(score(n,GREET)>0 && n.trim().split(" ").length<=5)
-    return R("Hey! I'm the **Axis Bank API Integration Assistant**. I can walk you through any of the Transaction Banking APIs — fields, payment modes, request/response samples, security, checksums or error codes. Where would you like to start?", HOME);
+═══════════════════════════════════════════════════════
+API 4: BENEFICIARY REGISTRATION
+═══════════════════════════════════════════════════════
+Endpoint: POST https://sakshamuat.axis.bank.in/gateway/api/txb/v3/payee-mgmt/beneficiary-registration
+Production: https://saksham.axis.bank.in/gateway/api/txb/v3/payee-mgmt/beneficiary-registration
 
-  // intent detection — catch "I need to make vendor payments" style queries
-  // only fire if no strong specific API keyword is already present
-  const apiHit=best(n,API_KEYS);
-  if(apiHit.s<2){
-    const intent=resolveIntent(n);
-    if(intent) return intentResponse(intent);
-  }
+MANDATORY HEADERS: Same as Transfer Payment
 
-  // out of scope APIs
-  if(score(n,OUT_OF_SCOPE)>0) return R(FALLBACK);
+MANDATORY REQUEST FIELDS:
+- Data.channelId (varchar 15)
+- Data.corpCode (varchar2 15)
+- Data.userId (varchar2 20)
+- Data.checksum (varchar2 500)
+- Data.beneinsert[].apiVersion (char 2)
+- Data.beneinsert[].beneCode (varchar2 30)
+- Data.beneinsert[].beneName (varchar2 100) — no special chars for RTGS/NEFT
+- Data.beneinsert[].beneAccNum (varchar2 50) — mandatory for RTGS/NEFT/FT
+- Data.beneinsert[].beneIfscCode (varchar2 11) — mandatory for RTGS/NEFT
+- Data.beneinsert[].beneLEI (AlphaNumeric 20) — mandatory for txns INR 50Cr+
 
-  const api=best(n,API_KEYS);
-  let facet=best(n,FACET_KEYS);
-  const wantResp=n.includes("response");
-  let apiKey=api.k;
-  if(api.s>0 && /\b(verify|validate|vpa|npci)\b/.test(n)) apiKey="verifyvpa";
+OPTIONAL: beneAcType, beneBankName, beneAddr1-3, beneCity, beneState, benePincode, beneEmailAddr1 (semicolon separated), beneMobileNo (semicolon separated, max 5)
 
-  // global facets (answerable without an API)
-  if(facet.s>0){
-    if(facet.k==="security")   return R(G.security, [s("HTTP headers","What are the HTTP headers?"),s("Encryption","How does the encryption work?"),s("Checksum","Explain the checksum")]);
-    if(facet.k==="headers")    return R(G.headers, [s("Security","What are the security requirements?"),s("Checksum","Explain the checksum")]);
-    if(facet.k==="checksum")   return R(inject(G.checksum), [s("Encryption","How does the encryption work?"),s("Security","What are the security requirements?")]);
-    if(facet.k==="encryption") return R(inject(G.encryption), [s("Security","What are the security requirements?"),s("Checksum","Explain the checksum")]);
-    if(facet.k==="url")        return R(inject(G.url), HOME);
-    if(facet.k==="coding" && !apiKey) return R(inject(G.coding), [s("Payment sample","Show a payment request sample"),s("HTTP headers","What headers do I send?"),s("Security","What are the security requirements?")]);
-    if(facet.k==="paymentmodes") return R(A.payment.paymentmodes, [s("Mandatory fields","Mandatory fields for the Payment API"),s("UPI sample","Show a payment request sample")]);
-    if(facet.k==="statuses")   return R(A.status.statuses, [s("Get Status sample","Show a Get Status request sample"),s("Response sample","Show a Get Status response sample")]);
-  }
+RESPONSE (Data.data.beneDetails[]): beneMobileNo, beneBankName, beneName, beneIfscCode, beneCode, beneEmailAddr1, corpCode, status, beneAccNum
 
-  // API known
-  if(apiKey){
-    const node=A[apiKey];
-    const f=facet.s>0?facet.k:"overview";
-    let text;
-    if(f==="sample") text=(wantResp&&node.sampleResp)?node.sampleResp:node.sample;
-    else if(f==="formats"&&node.formats) text=node.formats;
-    else if(f==="errors"&&node.errors) text=node.errors;
-    else if(f==="mandatory") text=node.mandatory||node.fields||node.overview;
-    else if(f==="fields") text=node.fields||node.overview;
-    else if(node[f]) text=node[f];
-    else text=node.overview;
-    return R(text, suggFor(apiKey,f,node));
-  }
+═══════════════════════════════════════════════════════
+API 5: BENEFICIARY ENQUIRY
+═══════════════════════════════════════════════════════
+Endpoint: POST https://sakshamuat.axis.bank.in/gateway/api/txb/v3/payee-mgmt/beneficiary-enquiry
+Production: https://saksham.axis.bank.in/gateway/api/txb/v3/payee-mgmt/beneficiary-enquiry
 
-  // facet known but no API
-  if(facet.s>0){
-    if(["sample","fields","mandatory"].includes(facet.k))
-      return R("Sure — which API should I show that for?", HOME);
-    if(facet.k==="errors")
-      return R("Errors depend on the API. Verify VPA returns NPCI codes (MM2/MM3/MM4); the others return failure messages like `Checksum verification failed` or `Corp ID not found` with `status: \"F\"`. Which one do you mean?", [s("Verify VPA errors","What are the Verify VPA error codes?"),s("Payment errors","What are the Payment API failure responses?")]);
-  }
+MANDATORY HEADERS: Same as Transfer Payment
 
-  return R(FALLBACK, HOME);
-}
-function inject(s){return s.replace(/\$\{EMAIL\}/g, FALLBACK);}
+MANDATORY REQUEST FIELDS:
+- Data.channelId (varchar 15)
+- Data.corpCode (varchar2 15)
+- Data.emailId (varchar2 100) — for CSV delivery if bene count > 10000
+- Data.status (varchar2 10) — 1=Active, 2=Inactive, 3=All
+- Data.checksum (varchar2 500)
+
+OPTIONAL: Data.fromDate, Data.toDate (YYYY-MM-DD), Data.beneCode (array)
+
+RESPONSE (Data.data): count, beneDetails[] with benePincode, beneCode, corpCode, beneAcType, beneMobileNo, beneBankName, beneName, authorizedBy, beneIfscCode, authorizedDate, beneEmailAddr1, beneAccNum, status
+
+═══════════════════════════════════════════════════════
+API 6: GET BALANCE
+═══════════════════════════════════════════════════════
+Endpoint: POST https://sakshamuat.axis.bank.in/gateway/api/txb/v3/acct-recon/get-balance
+Production: https://saksham.axis.bank.in/gateway/api/txb/v3/acct-recon/get-balance
+
+MANDATORY HEADERS: Same as Transfer Payment (includes x-fapi-serviceId and x-fapi-serviceVersion)
+
+MANDATORY REQUEST FIELDS:
+- Data.channelId (varchar 15)
+- Data.corpCode (varchar2 15)
+- Data.corpAccNum (varchar2 15) — corporate debit account number
+- Data.checksum (varchar 500)
+
+RESPONSE (Data.data): channelId, corpAccNum, corpCode, Balance, checksum; Data.message, Data.status
+
+═══════════════════════════════════════════════════════
+API 7: ACCOUNT VALIDATION (P2A)
+═══════════════════════════════════════════════════════
+Endpoint: POST https://sakshamuat.axis.bank.in/gateway/api/txb/v3/p2a/p2transaction
+Production: https://saksham.axis.bank.in/gateway/api/txb/v3/p2a/p2transaction
+
+MANDATORY HEADERS: x-fapi-channel-id(15), x-fapi-epoch-millis(20), x-fapi-uuid(50), Content-Type=text/plain, X-IBM-Client-Id, X-IBM-ClientSecret
+
+MANDATORY REQUEST FIELDS (inside Data.P2EnquiryRequest):
+- corpCode (AlphaNumeric 15)
+- channelId (AlphaNumeric 15)
+- remitterAcc (AlphaNumeric 20)
+- beneAccNum (AlphaNumeric 50)
+- beneIFSC (varchar2 15)
+- checksum (AlphaNumeric 255)
+
+RESPONSE (Data.P2EnquiryResponse): code, message, data, status
+
+═══════════════════════════════════════════════════════
+SECURITY — APPLIES TO ALL APIs
+═══════════════════════════════════════════════════════
+- Protocol: HTTPS with TLS 1.2 mandatory
+- Authentication: X-IBM-Client-Id + X-IBM-Client-Secret + IP Whitelisting + MTLS
+- Encryption: JWE with RSA-OAEP-256 key encryption + A256GCM content encryption
+- Signing: RS256 (JWS Compact Serialization RFC 7515/7516)
+- MTLS: Two-way SSL, consumer must submit CSR to Axis Bank for signing
+- IP Whitelisting: Register all public static IPs with the bank
+- Checksum: Calculated on body attributes only (logic shared separately as checksum logic and code.txt)
+- Epoch millis: Must be within 5-minute window of server time or request rejected with 400 TimestampError
+- x-fapi-uuid: Must be unique per request, alphanumeric only, no special characters
+
+═══════════════════════════════════════════════════════
+ERROR CODES — ALL APIs
+═══════════════════════════════════════════════════════
+400 Bad Request:
+- TimestampError: "Request timestamp should be in the 5 minute interval" — fix epoch millis
+- sqlInjError (S001010): "Possible sql Injection threat detected" — sanitise inputs
+- xssError (S001010): "Possible XSS threat detected" — sanitise inputs
+- DecryptError (S001010): "JWE Decryption Error" — check encryption implementation and enckey
+- Headers (400): "One or more required API parameters are missing" — check all mandatory headers
+
+401 Unauthorized:
+- "Invalid client id or secret" — verify X-IBM-Client-Id and X-IBM-Client-Secret
+- ChannelId Mismatch (S001001) — channelId in header doesn't match registered value
+
+403 Forbidden: IP not whitelisted — contact bank to register IP
+
+422 Unprocessable Entity:
+- SchemaError (B001011): "Invalid object: the property 'X' is missing" — add the missing mandatory field
+- BusinessFailure (B001022): "invalid corpcode or channelId" — verify corp code and channel ID with bank
+
+429 Too Many Requests: "Assembly Rate Limit exceeded" — implement rate limiting
+
+500 Internal Server Error: "JWE Decryption Error: TypeError: Cannot read properties of null" — check encryption key/certificate setup
+
+═══════════════════════════════════════════════════════
+CODE GENERATION GUIDE
+═══════════════════════════════════════════════════════
+When generating code always:
+1. Include ALL mandatory headers
+2. Use the correct UAT endpoint URL
+3. Note that the body must be JWE encrypted before sending (RSA-OAEP-256 + A256GCM)
+4. Show the plain JSON structure first, then note encryption requirement
+5. Generate in the language the user requests (cURL, Python, Node.js, Java)
+6. Always include a note about the checksum field requirement`;
+
+/* =====================================================================
+   CONVERSATION HISTORY & ATTACHMENT STATE
+   ===================================================================== */
+let conversationHistory = [];
+let pendingAttachment = null; // {type: 'image'|'file', data: base64, mediaType: string, name: string}
 
 /* =====================================================================
    UI — floating widget
    ===================================================================== */
-const streamEl=document.getElementById('stream');
-const innerEl=document.getElementById('streamInner');
-const inputEl=document.getElementById('input');
-const sendBtn=document.getElementById('send');
-const widget=document.getElementById('widget');
-const launcher=document.getElementById('launcher');
-const launcherOuter=document.getElementById('launcherOuter');
-const closeBtn=document.getElementById('closeBtn');
-const attachBtn=document.getElementById('attachBtn');
-const attachMenu=document.getElementById('attachMenu');
-const launcherTop=document.getElementById('launcherTop');
-const launcherSend=document.getElementById('launcherSend');
-let busy=false, started=false;
+const streamEl   = document.getElementById('stream');
+const innerEl    = document.getElementById('streamInner');
+const inputEl    = document.getElementById('input');
+const sendBtn    = document.getElementById('send');
+const widget     = document.getElementById('widget');
+const launcher   = document.getElementById('launcher');
+const launcherOuter = document.getElementById('launcherOuter');
+const closeBtn   = document.getElementById('closeBtn');
+const attachBtn  = document.getElementById('attachBtn');
+const attachMenu = document.getElementById('attachMenu');
+const launcherTop  = document.getElementById('launcherTop');
+const launcherSend = document.getElementById('launcherSend');
+const widgetAttachBtn  = document.getElementById('widgetAttachBtn');
+const widgetAttachMenu = document.getElementById('widgetAttachMenu');
+let busy = false, started = false;
 
 function openWidget(){
   widget.classList.add('open');
   launcherOuter.classList.add('hidden');
   attachMenu.classList.remove('open');
   if(!started){ started=true; init(); }
-  setTimeout(()=>inputEl.focus(),180);
+  setTimeout(()=>inputEl.focus(), 180);
 }
 function closeWidget(){
   widget.classList.remove('open');
   launcherOuter.classList.remove('hidden');
 }
 
-// Card top row and Ask button open the widget
-launcherTop.onclick=openWidget;
-launcherSend.onclick=openWidget;
+launcherTop.onclick  = openWidget;
+launcherSend.onclick = openWidget;
 
-// Attach button toggles the dropdown (does NOT open widget)
-attachBtn.onclick=function(e){
+// Launcher attach (demo only - opens menu)
+attachBtn.onclick = function(e){
   e.stopPropagation();
   attachMenu.classList.toggle('open');
 };
-
-// Clicking an attach menu item just closes the menu (demo only)
 attachMenu.querySelectorAll('.attach-item').forEach(item=>{
-  item.onclick=function(e){
-    e.stopPropagation();
-    attachMenu.classList.remove('open');
-  };
+  item.onclick = function(e){ e.stopPropagation(); attachMenu.classList.remove('open'); };
 });
 
-// Widget attach button
-const widgetAttachBtn=document.getElementById('widgetAttachBtn');
-const widgetAttachMenu=document.getElementById('widgetAttachMenu');
-widgetAttachBtn.onclick=function(e){
+// Widget attach — real file picker
+widgetAttachBtn.onclick = function(e){
   e.stopPropagation();
   widgetAttachMenu.classList.toggle('open');
 };
-widgetAttachMenu.querySelectorAll('.attach-item').forEach(item=>{
-  item.onclick=function(e){ e.stopPropagation(); widgetAttachMenu.classList.remove('open'); };
+widgetAttachMenu.querySelectorAll('.attach-item').forEach((item, idx)=>{
+  item.onclick = function(e){
+    e.stopPropagation();
+    widgetAttachMenu.classList.remove('open');
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = idx === 0 ? '.json,.txt,.pdf,.log,.xml,.csv' : 'image/*';
+    input.onchange = function(){
+      const file = input.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = function(ev){
+        const base64 = ev.target.result.split(',')[1];
+        const isImage = file.type.startsWith('image/');
+        pendingAttachment = {
+          type: isImage ? 'image' : 'file',
+          data: base64,
+          mediaType: file.type || (isImage ? 'image/png' : 'text/plain'),
+          name: file.name,
+          rawResult: ev.target.result
+        };
+        showAttachmentPreview(file.name, isImage);
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  };
 });
 
-// Close all attach menus when clicking anywhere else
+function showAttachmentPreview(name, isImage){
+  let preview = document.getElementById('attachPreview');
+  if(!preview){
+    preview = document.createElement('div');
+    preview.id = 'attachPreview';
+    preview.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 12px;background:#fff5f9;border-top:1px solid #f0d0df;font-size:.78rem;color:#97144D;';
+    const composer = document.querySelector('.composer');
+    composer.parentNode.insertBefore(preview, composer);
+  }
+  preview.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="#97144D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+    <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</span>
+    <span id="removeAttach" style="cursor:pointer;font-weight:700;padding:2px 6px;border-radius:4px;background:#fce4ef">×</span>`;
+  document.getElementById('removeAttach').onclick = function(){
+    pendingAttachment = null;
+    preview.remove();
+  };
+}
+
+// Close menus on outside click
 document.addEventListener('click',function(){
   attachMenu.classList.remove('open');
   widgetAttachMenu.classList.remove('open');
 });
 
-closeBtn.onclick=closeWidget;
+closeBtn.onclick = closeWidget;
 
-function ask(q){ if(busy)return; inputEl.value=q; send(); }
+/* =====================================================================
+   RENDER HELPERS
+   ===================================================================== */
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmt(s){ return s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/`([^`]+?)`/g,'<code class="inline">$1</code>'); }
+function botAvatar(){ return '<svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2 2 21h5l5-9.5L17 21h5L12 2z"/></svg>'; }
 
-function init(){
-  addBot("Hi! I'm the Axis Bank Integration Assistant. I can walk you through any Transaction Banking API — fields, payment modes, request/response samples, security, checksums or error codes.\n\nEverything I share comes straight from the official specs. Where would you like to start?", HOME);
-}
-
-function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function render(text){
-  const parts=text.split(/```/);let html='';
+  const parts = text.split(/```/); let html='';
   for(let i=0;i<parts.length;i++){
-    if(i%2===1){let code=parts[i].replace(/^[a-zA-Z]*\n/,'');html+=`<div class="codeblock"><button class="copy-btn">Copy</button><pre>${esc(code.replace(/\n$/,''))}</pre></div>`;}
-    else html+=inlineMd(parts[i]);
+    if(i%2===1){
+      let code = parts[i].replace(/^[a-zA-Z]*\n/,'');
+      html += `<div class="codeblock"><button class="copy-btn">Copy</button><pre>${esc(code.replace(/\n$/,''))}</pre></div>`;
+    } else html += inlineMd(parts[i]);
   }
   return html;
 }
 function inlineMd(seg){
-  const lines=esc(seg).split('\n');let out='',list=null;
+  const lines=esc(seg).split('\n'); let out='',list=null;
   const flush=()=>{if(list){out+=`</${list}>`;list=null;}};
   for(let raw of lines){
     let line=raw.trim();
@@ -606,44 +584,139 @@ function inlineMd(seg){
   }
   flush();return out;
 }
-function fmt(s){return s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/`([^`]+?)`/g,'<code class="inline">$1</code>');}
-function botAvatar(){return '<svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2 2 21h5l5-9.5L17 21h5L12 2z"/></svg>';}
 
-function addBot(text,sugg){
-  const isFb=text.trim()===FALLBACK;
-  const w=document.createElement('div');w.className='msg bot';
-  let inner = isFb
-    ? `<div class="fallback">Please reach out to <a href="mailto:api.connect@axis.bank.in">api.connect@axis.bank.in</a></div>`
+function addBot(text, typing=false){
+  const isFallback = text.includes('api.connect@axis.bank.in') && text.length < 200;
+  const w = document.createElement('div'); w.className='msg bot';
+  let inner = isFallback
+    ? `<div class="fallback">I don't have that information in the integration docs. Please reach out to <a href="mailto:api.connect@axis.bank.in">api.connect@axis.bank.in</a> for further support.</div>`
     : render(text);
-  if(sugg && sugg.length){
-    inner += '<div class="followups">'+sugg.map((x,i)=>`<button class="fu" data-i="${i}">${esc(x.l)}</button>`).join('')+'</div>';
-  }
-  w.innerHTML=`<div class="av">${botAvatar()}</div><div class="bubble">${inner}</div>`;
+  w.innerHTML = `<div class="av">${botAvatar()}</div><div class="bubble">${inner}</div>`;
   innerEl.appendChild(w);
   wireCopy(w);
-  if(sugg && sugg.length){ w.querySelectorAll('.fu').forEach(b=>{ b.onclick=()=>ask(sugg[+b.dataset.i].q); }); }
   scrollDown();
+  return w;
 }
-function addUser(text){const w=document.createElement('div');w.className='msg user';w.innerHTML=`<div class="av">You</div><div class="bubble">${esc(text).replace(/\n/g,'<br>')}</div>`;innerEl.appendChild(w);scrollDown();}
-function addTyping(){const w=document.createElement('div');w.className='msg bot';w.id='typing';w.innerHTML=`<div class="av">${botAvatar()}</div><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;innerEl.appendChild(w);scrollDown();}
-function rmTyping(){const t=document.getElementById('typing');if(t)t.remove();}
-function wireCopy(scope){scope.querySelectorAll('.copy-btn').forEach(b=>{b.onclick=()=>{const c=b.nextElementSibling.innerText;navigator.clipboard?.writeText(c);b.textContent='Copied';setTimeout(()=>b.textContent='Copy',1400);};});}
-function scrollDown(){streamEl.scrollTop=streamEl.scrollHeight;}
+function addUser(text, attachName){
+  const w=document.createElement('div'); w.className='msg user';
+  let html = `<div class="bubble">${esc(text).replace(/\n/g,'<br>')}`;
+  if(attachName) html += `<div style="margin-top:6px;font-size:.73rem;opacity:.7">📎 ${esc(attachName)}</div>`;
+  html += '</div><div class="av">You</div>';
+  w.innerHTML=html; innerEl.appendChild(w); scrollDown();
+}
+function addTyping(){
+  const w=document.createElement('div'); w.className='msg bot'; w.id='typing';
+  w.innerHTML=`<div class="av">${botAvatar()}</div><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  innerEl.appendChild(w); scrollDown();
+}
+function rmTyping(){ const t=document.getElementById('typing'); if(t)t.remove(); }
+function wireCopy(scope){ scope.querySelectorAll('.copy-btn').forEach(b=>{ b.onclick=()=>{ navigator.clipboard?.writeText(b.nextElementSibling.innerText); b.textContent='Copied'; setTimeout(()=>b.textContent='Copy',1400); }; }); }
+function scrollDown(){ streamEl.scrollTop=streamEl.scrollHeight; }
 
-function send(){
-  const text=inputEl.value.trim();
-  if(!text||busy)return;
-  busy=true;sendBtn.disabled=true;
-  addUser(text);
-  inputEl.value='';inputEl.style.height='auto';
+/* =====================================================================
+   CLAUDE API CALL
+   ===================================================================== */
+async function callClaude(userText, attachment){
+  // Build user message content
+  let userContent = [];
+
+  // Add attachment if present
+  if(attachment){
+    if(attachment.type === 'image'){
+      userContent.push({
+        type: 'image',
+        source: { type: 'base64', media_type: attachment.mediaType, data: attachment.data }
+      });
+      userContent.push({ type: 'text', text: `[User attached image: ${attachment.name}]\n\n${userText || 'Please analyse this image/screenshot and identify any integration issues based on the Axis Bank API specs.'}` });
+    } else {
+      // For non-image files, decode and send as text
+      try {
+        const decoded = atob(attachment.data);
+        userContent.push({ type: 'text', text: `[User attached file: ${attachment.name}]\n\nFile contents:\n\`\`\`\n${decoded}\n\`\`\`\n\n${userText || 'Please analyse this file and identify any integration issues based on the Axis Bank API specs.'}` });
+      } catch(e){
+        userContent.push({ type: 'text', text: `[User attached file: ${attachment.name} — could not decode]\n\n${userText}` });
+      }
+    }
+  } else {
+    userContent = userText;
+  }
+
+  // Add to history
+  conversationHistory.push({ role: 'user', content: userContent });
+
+  const response = await fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': API_KEY,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: 1024,
+      system: SYSTEM_PROMPT,
+      messages: conversationHistory
+    })
+  });
+
+  if(!response.ok){
+    const err = await response.json().catch(()=>({}));
+    throw new Error(err?.error?.message || `API error ${response.status}`);
+  }
+
+  const data = await response.json();
+  const assistantText = data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+
+  // Add assistant response to history
+  conversationHistory.push({ role: 'assistant', content: assistantText });
+
+  return assistantText;
+}
+
+/* =====================================================================
+   SEND
+   ===================================================================== */
+async function send(){
+  const text = inputEl.value.trim();
+  const attachment = pendingAttachment;
+  if((!text && !attachment) || busy) return;
+
+  busy=true; sendBtn.disabled=true;
+  addUser(text, attachment?.name);
+  inputEl.value=''; inputEl.style.height='auto';
+
+  // Clear attachment preview
+  if(attachment){
+    pendingAttachment = null;
+    const preview = document.getElementById('attachPreview');
+    if(preview) preview.remove();
+  }
+
   addTyping();
-  const res=resolve(text);
-  setTimeout(()=>{rmTyping();addBot(res.text,res.sugg);busy=false;sendBtn.disabled=false;inputEl.focus();}, 380+Math.random()*420);
+
+  try {
+    const reply = await callClaude(text, attachment);
+    rmTyping();
+    addBot(reply);
+  } catch(err){
+    rmTyping();
+    addBot(`**Error connecting to assistant:** ${err.message}\n\nPlease check your API key or try again. For integration support, contact api.connect@axis.bank.in`);
+  }
+
+  busy=false; sendBtn.disabled=false; inputEl.focus();
 }
 
-sendBtn.onclick=send;
-inputEl.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});
-inputEl.addEventListener('input',()=>{inputEl.style.height='auto';inputEl.style.height=Math.min(inputEl.scrollHeight,120)+'px';});
+/* =====================================================================
+   INIT
+   ===================================================================== */
+function init(){
+  addBot("Hi! I'm the Axis Bank Integration Assistant, powered by AI and grounded in the official Transaction Banking API specs.\n\nI can help you with:\n- **Fields & mandatory parameters** for any API\n- **Code generation** in cURL, Python, Node.js or Java\n- **Error diagnosis** — paste an error log or upload a screenshot\n- **Security setup** — JWE encryption, MTLS, headers\n\nWhat would you like help with?");
+}
+
+sendBtn.onclick = send;
+inputEl.addEventListener('keydown', e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(); } });
+inputEl.addEventListener('input', ()=>{ inputEl.style.height='auto'; inputEl.style.height=Math.min(inputEl.scrollHeight,120)+'px'; });
 </script>
 </body>
 </html>
