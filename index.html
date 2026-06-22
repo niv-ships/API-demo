@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -236,8 +236,8 @@
    Replace YOUR_API_KEY_HERE with your actual Anthropic API key
    ===================================================================== */
 
-const API_KEY = "__ANTHROPIC_API_KEY__";
-const API_URL = "https://api.anthropic.com/v1/messages";
+const API_KEY = null; // Key is stored securely in Cloudflare Worker
+const API_URL = "https://api-proxy.nvs010293.workers.dev";
 const MODEL   = "claude-sonnet-4-6";
 
 const SYSTEM_PROMPT = `You are the Axis Bank Transaction Banking API Integration Assistant, embedded on the Axis Bank API Developer Portal. You help corporate developers integrate with Axis Bank's Transaction Banking APIs.
@@ -648,9 +648,7 @@ async function callClaude(userText, attachment){
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': API_KEY,
       'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
     },
     body: JSON.stringify({
       model: MODEL,
@@ -701,9 +699,7 @@ async function send(){
     addBot(reply);
   } catch(err){
     rmTyping();
-    const isKeyMissing = API_KEY === 'YOUR_API_KEY_HERE';
-    const errMsg = isKeyMissing ? '**API key not configured.** Find line 239 and replace YOUR_API_KEY_HERE with your Anthropic API key.' : '**Error:** ' + err.message + ' — If this persists, contact api.connect@axis.bank.in';
-    addBot(errMsg);
+    addBot('**Error:** ' + err.message + ' — Please try again. If this persists, contact api.connect@axis.bank.in');
   }
 
   busy=false; sendBtn.disabled=false; inputEl.focus();
