@@ -189,7 +189,7 @@
           </button>
         </div>
       </div>
-      <div class="launcher-disclaimer">Prototype · AI-powered · Grounded in the official Axis Bank API specs. · <strong>v10.1</strong></div>
+      <div class="launcher-disclaimer">Prototype · AI-powered · Grounded in the official Axis Bank API specs. · <strong>v10.2</strong></div>
     </div>
   </div>
 
@@ -226,7 +226,7 @@
         </div>
         <button id="send" title="Send" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
       </div>
-      <div class="disclaimer">Prototype · AI-powered · Grounded in the official Axis Bank API specs. · <strong>v10.1</strong></div>
+      <div class="disclaimer">Prototype · AI-powered · Grounded in the official Axis Bank API specs. · <strong>v10.2</strong></div>
     </div>
   </div>
 
@@ -683,16 +683,38 @@ async function callClaude(userText, attachment){
 /* =====================================================================
    CHIPS
    ===================================================================== */
-// Expose sendChip globally and use event delegation for reliability
+// Chip sender — fully self-contained, doesn't rely on inputEl state
 window.sendChip = function(text){
+  if(busy) return;
   if(!widget.classList.contains('open')) openWidget();
-  setTimeout(()=>{ inputEl.value = text; send(); }, 80);
+  // Small delay to let openWidget animation settle
+  setTimeout(async ()=>{
+    if(busy) return;
+    busy = true; sendBtn.disabled = true;
+    addUser(text, null);
+    inputEl.value = '';
+    addTyping();
+    try {
+      const reply = await callClaude(text, null);
+      rmTyping();
+      const chips = suggestChips(text, reply);
+      addBot(reply, chips);
+    } catch(err){
+      rmTyping();
+      addBot('**Error:** ' + err.message + ' — Please try again.');
+    }
+    busy = false; sendBtn.disabled = false; inputEl.focus();
+  }, 100);
 };
 
-// Event delegation — catches chip clicks anywhere in the stream
+// Event delegation — catches chip clicks anywhere in stream
 document.addEventListener('click', function(e){
   const chip = e.target.closest('[data-chip]');
-  if(chip){ window.sendChip(chip.dataset.chip); }
+  if(chip){
+    e.preventDefault();
+    e.stopPropagation();
+    window.sendChip(chip.dataset.chip);
+  }
 });
 
 /* =====================================================================
