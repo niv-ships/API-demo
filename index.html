@@ -94,14 +94,14 @@
   .msg.bot .av svg{width:15px;height:15px}
   .msg.user{flex-direction:row-reverse}
   .msg.user .av{background:var(--ink);color:#fff}
-  .bubble{padding:11px 13px;border-radius:13px;font-size:.88rem;line-height:1.55;max-width:84%;word-wrap:break-word;overflow-wrap:anywhere}
+  .bubble{padding:14px 16px;border-radius:14px;font-size:.97rem;line-height:1.6;max-width:86%;word-wrap:break-word;overflow-wrap:anywhere}
   .msg.bot .bubble{background:var(--panel);border:1px solid var(--grey-light);border-top-left-radius:4px;box-shadow:var(--shadow)}
   .msg.user .bubble{background:var(--ink);color:#fff;border-top-right-radius:4px}
-  .bubble p{margin:0 0 8px}.bubble p:last-child{margin-bottom:0}
+  .bubble p{margin:0 0 10px}.bubble p:last-child{margin-bottom:0}
   .bubble strong{font-weight:700}
-  .bubble ul,.bubble ol{margin:5px 0 8px;padding-left:18px}
-  .bubble li{margin:3px 0}
-  .bubble code.inline{background:#f3e7ed;color:var(--crimson);padding:1px 5px;border-radius:5px;font-size:.84em;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+  .bubble ul,.bubble ol{margin:6px 0 10px;padding-left:20px}
+  .bubble li{margin:5px 0}
+  .bubble code.inline{background:#f3e7ed;color:var(--crimson);padding:2px 7px;border-radius:6px;font-size:.86em;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-weight:500}
   .msg.user .bubble code.inline{background:rgba(255,255,255,.18);color:#fff}
   .codeblock{position:relative;margin:8px 0;border-radius:9px;overflow:hidden;border:1px solid #2c1f30}
   .codeblock pre{margin:0;background:var(--code-bg);color:#f3e9ef;padding:11px 12px;overflow-x:auto;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:.74rem;line-height:1.5}
@@ -115,16 +115,10 @@
   .typing span:nth-child(2){animation-delay:.18s}.typing span:nth-child(3){animation-delay:.36s}
   @keyframes blink{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
 
-  /* ---------- Starter chips bar ---------- */
-  .chips-bar{padding:8px 12px 6px;background:#fdf9fb;border-bottom:1px solid var(--grey-light);display:flex;gap:6px;overflow-x:auto;flex-shrink:0;scrollbar-width:none}
-  .chips-bar::-webkit-scrollbar{display:none}
-  .chip{flex-shrink:0;font-size:.75rem;font-weight:600;padding:5px 12px;border-radius:20px;border:1px solid #e0c0d0;background:#fff;color:var(--crimson);cursor:pointer;white-space:nowrap;transition:background .15s,color .15s,border-color .15s}
-  .chip:hover{background:var(--crimson);color:#fff;border-color:var(--crimson)}
-
-  .followups{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px;padding-top:10px;border-top:1px dashed var(--grey-light)}
-  .followups .fu{background:#fff;border:1px solid var(--grey-light);color:var(--crimson);font-size:.76rem;padding:6px 11px;border-radius:999px;cursor:pointer;font-weight:600;transition:.15s;display:inline-flex;align-items:center;gap:6px}
-  .followups .fu:hover{border-color:var(--magenta);background:#fff5f9}
-  .followups .fu::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--magenta);flex:none}
+  .followups{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;padding-top:11px;border-top:1px dashed var(--grey-light)}
+  .followups .fu{background:#fff;border:1px solid #e0c0d0;color:var(--crimson);font-size:.82rem;padding:8px 14px;border-radius:999px;cursor:pointer;font-weight:600;transition:.15s;display:inline-flex;align-items:center;gap:7px;box-shadow:0 1px 3px rgba(151,20,77,.08)}
+  .followups .fu:hover{border-color:var(--crimson);background:#fff5f9;box-shadow:0 2px 6px rgba(151,20,77,.13)}
+  .followups .fu::before{content:"•";color:var(--magenta);font-size:1em;flex:none}
 
   .composer{padding:10px 12px 12px;background:var(--canvas);flex:none}
   .composer-inner{display:flex;gap:8px;align-items:flex-end;background:var(--panel);border:1px solid var(--grey-light);border-radius:15px;padding:7px 7px 7px 13px;box-shadow:var(--shadow);transition:border-color .15s}
@@ -195,7 +189,7 @@
           </button>
         </div>
       </div>
-      <div class="launcher-disclaimer">Prototype · AI-powered · Grounded in the official Axis Bank API specs. · <strong>v8</strong></div>
+      <div class="launcher-disclaimer">Prototype · AI-powered · Grounded in the official Axis Bank API specs. · <strong>v9</strong></div>
     </div>
   </div>
 
@@ -211,15 +205,6 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
     </header>
-    <div class="chips-bar" id="chipsBar">
-      <button class="chip" onclick="sendChip('What are the mandatory fields?')">Mandatory Fields</button>
-      <button class="chip" onclick="sendChip('Explain the security requirements')">Security</button>
-      <button class="chip" onclick="sendChip('How does JWE encryption work?')">Encryption</button>
-      <button class="chip" onclick="sendChip('Generate a code sample in cURL')">Code Sample</button>
-      <button class="chip" onclick="sendChip('What are the common error codes?')">Error Codes</button>
-      <button class="chip" onclick="sendChip('How do I register a beneficiary?')">Beneficiary</button>
-      <button class="chip" onclick="sendChip('How do I verify a UPI VPA?')">Verify VPA</button>
-    </div>
     <div class="stream" id="stream"><div class="stream-inner" id="streamInner"></div></div>
     <div class="composer">
       <div class="composer-inner">
@@ -241,7 +226,7 @@
         </div>
         <button id="send" title="Send" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
       </div>
-      <div class="disclaimer">Prototype · AI-powered · Grounded in the official Axis Bank API specs. · <strong>v8</strong></div>
+      <div class="disclaimer">Prototype · AI-powered · Grounded in the official Axis Bank API specs. · <strong>v9</strong></div>
     </div>
   </div>
 
@@ -601,12 +586,12 @@ function inlineMd(seg){
   flush();return out;
 }
 
-function addBot(text, typing=false){
-  const isFallback = false; // Fallback display disabled - show all responses normally
+function addBot(text, chips=[]){
   const w = document.createElement('div'); w.className='msg bot';
-  let inner = isFallback
-    ? `<div class="fallback">I don't have that information in the integration docs. Please reach out to <a href="mailto:api.connect@axis.bank.in">api.connect@axis.bank.in</a> for further support.</div>`
-    : render(text);
+  let inner = render(text);
+  if(chips.length){
+    inner += '<div class="followups">' + chips.map(c=>`<button class="fu" onclick="sendChip(${JSON.stringify(c)})">${c}</button>`).join('') + '</div>';
+  }
   w.innerHTML = `<div class="av">${botAvatar()}</div><div class="bubble">${inner}</div>`;
   innerEl.appendChild(w);
   wireCopy(w);
@@ -692,9 +677,6 @@ async function callClaude(userText, attachment){
    CHIPS
    ===================================================================== */
 function sendChip(text){
-  // Hide chips bar after first selection — keeps the chat clean
-  const bar = document.getElementById('chipsBar');
-  if(bar) bar.style.display = 'none';
   inputEl.value = text;
   send();
 }
@@ -736,7 +718,10 @@ async function send(){
    INIT
    ===================================================================== */
 function init(){
-  addBot("Hi! I'm the Axis Bank Integration Assistant, powered by AI and grounded in the official Transaction Banking API specs.\n\nI can help you with:\n- **Fields & mandatory parameters** for any API\n- **Code generation** in cURL, Python, Node.js or Java\n- **Error diagnosis** — paste an error log or upload a screenshot\n- **Security setup** — JWE encryption, MTLS, headers\n\nWhat would you like help with?");
+  addBot(
+    "Hi! I'm the Axis Bank Integration Assistant, powered by AI and grounded in the official Transaction Banking API specs.\n\nI can walk you through any Transaction Banking API — fields, payment modes, request/response samples, security, checksums or error codes.\n\nEverything I share comes straight from the official specs. Where would you like to start?",
+    ['Payment API','Get Status','Verify VPA','Security','Beneficiary','Error codes']
+  );
 }
 
 sendBtn.onclick = send;
